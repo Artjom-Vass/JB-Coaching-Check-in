@@ -106,7 +106,6 @@ input::placeholder { color: var(--muted); }
   background: var(--s1); border: 1px solid var(--border);
   border-radius: var(--r); padding: 20px; margin-bottom: 14px;
 }
-.add-form-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
 
 /* ── Participant cards ── */
 .participant-card {
@@ -218,18 +217,20 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
   <!-- Add participant -->
   <div class="section-title">Deelnemer toevoegen</div>
   <div class="add-form">
-    <div class="add-form-row">
-      <div class="field" style="margin-bottom:0">
-        <label>Naam deelnemer</label>
-        <input type="text" id="newName" placeholder="bijv. Anna de Vries">
-      </div>
-      <div class="field" style="margin-bottom:0">
-        <label>Google Spreadsheet ID</label>
-        <input type="text" id="newSheetId" placeholder="1BxiMV...YRm8n">
-      </div>
-      <button class="btn btn-gold" onclick="addParticipant()" style="white-space:nowrap">+ Toevoegen</button>
+    <div class="field">
+      <label>Naam deelnemer</label>
+      <input type="text" id="newName" placeholder="bijv. Anna de Vries">
     </div>
-    <p class="info-text" style="margin-top:10px">Spreadsheet ID vind je in de URL van het sheet: docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit</p>
+    <div class="field">
+      <label>Google Sheets URL of Spreadsheet ID</label>
+      <input type="text" id="newSheetId" placeholder="https://docs.google.com/spreadsheets/d/..." oninput="previewExtractedId()">
+      <div id="extractedIdPreview" style="display:none;margin-top:6px;">
+        <span style="font-size:11px;color:var(--muted);">Herkend ID: </span>
+        <span id="extractedIdValue" style="font-family:var(--mono);font-size:11px;color:var(--green)"></span>
+      </div>
+      <p class="info-text">Plak de volledige URL van het Google Sheet, of het ID direct</p>
+    </div>
+    <button class="btn btn-gold" onclick="addParticipant()" style="width:100%">+ Deelnemer toevoegen</button>
   </div>
 
   <!-- Participant list -->
@@ -277,13 +278,40 @@ function updateAppUrlDisplay() {
   }
 }
 
+// ─── Extract Sheet ID from URL or raw ID ─────────────────
+function extractSheetId(input) {
+  const trimmed = input.trim();
+  // Try to extract from full Google Sheets URL
+  const match = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  if (match) return match[1];
+  // Otherwise assume it's already a raw ID (no slashes, no spaces)
+  if (/^[a-zA-Z0-9_-]+$/.test(trimmed)) return trimmed;
+  return null;
+}
+
+function previewExtractedId() {
+  const input   = document.getElementById('newSheetId').value;
+  const preview = document.getElementById('extractedIdPreview');
+  const val     = document.getElementById('extractedIdValue');
+  const id      = extractSheetId(input);
+  if (id && input.length > 10) {
+    val.textContent = id;
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
 // ─── Participants ──────────────────────────────────────────
 function addParticipant() {
-  const name    = document.getElementById('newName').value.trim();
-  const sheetId = document.getElementById('newSheetId').value.trim();
+  const name  = document.getElementById('newName').value.trim();
+  const input = document.getElementById('newSheetId').value.trim();
 
-  if (!name)    { showToast('⚠️ Vul een naam in'); return; }
-  if (!sheetId) { showToast('⚠️ Vul een Spreadsheet ID in'); return; }
+  if (!name)  { showToast('⚠️ Vul een naam in'); return; }
+  if (!input) { showToast('⚠️ Vul een URL of ID in'); return; }
+
+  const sheetId = extractSheetId(input);
+  if (!sheetId) { showToast('⚠️ Geen geldig Sheet ID gevonden in de URL'); return; }
 
   participants.push({ id: Date.now(), name, sheetId });
   save();
@@ -291,6 +319,7 @@ function addParticipant() {
 
   document.getElementById('newName').value    = '';
   document.getElementById('newSheetId').value = '';
+  document.getElementById('extractedIdPreview').style.display = 'none';
   showToast('✓ ' + name + ' toegevoegd');
 }
 
@@ -333,15 +362,30 @@ function openApp(sheetId) {
   window.open(getLink(sheetId), '_blank');
 }
 
-function shareLink(name, sheetId) {
+function shareWhatsApp(name, sheetId) {
   const link = getLink(sheetId);
-  const text = `Hoi ${name}! Hier is jouw persoonlijke JB Coaching check-in link:\n\n${link}\n\nOpen deze link elke dag om je check-in in te vullen. 💪`;
+  const text = encodeURIComponent(
+    `Hoi ${name}! 👋\n\nHier is jouw persoonlijke JB Coaching check-in link:\n\n${link}\n\nOpen deze link elke dag om je dagelijkse check-in in te vullen. 💪`
+  );
+  window.open(`https://wa.me/?text=${text}`, '_blank');
+}
+
+function shareNative(name, sheetId) {
+  const link = getLink(sheetId);
+  const text = `Hoi ${name}! 👋\n\nHier is jouw persoonlijke JB Coaching check-in link:\n\n${link}\n\nOpen deze link elke dag om je dagelijkse check-in in te vullen. 💪`;
 
   if (navigator.share) {
-    navigator.share({ title: 'JB Coaching Check-in', text });
+    navigator.share({ title: 'JB Coaching Check-in link', text });
   } else {
+    // Fallback: copy to clipboard
     navigator.clipboard.writeText(text).then(() => {
       showToast('✓ Bericht gekopieerd — plak het in WhatsApp!');
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('✓ Bericht gekopieerd!');
     });
   }
 }
@@ -369,7 +413,8 @@ function renderParticipants() {
           <div class="card-name">👤 ${escHtml(p.name)}</div>
           <div class="card-actions">
             <button class="btn btn-sm btn-outline" onclick="openApp('${escHtml(p.sheetId)}')">🔗 Openen</button>
-            <button class="btn btn-sm btn-green" onclick="shareLink('${escHtml(p.name)}','${escHtml(p.sheetId)}')">📤 Delen</button>
+            <button class="btn btn-sm btn-green" onclick="shareWhatsApp('${escHtml(p.name)}','${escHtml(p.sheetId)}')">💬 WhatsApp</button>
+            <button class="btn btn-sm btn-outline" onclick="shareNative('${escHtml(p.name)}','${escHtml(p.sheetId)}')">📤 Delen</button>
             <button class="btn btn-sm btn-red" onclick="removeParticipant(${p.id})">✕</button>
           </div>
         </div>
