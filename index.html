@@ -626,21 +626,21 @@
         <div class="field">
           <label>Omega 3</label>
           <div class="toggle-group">
-            <button class="toggle-btn active-ja" onclick="toggleJaNee(this, 'omega3')" data-field="omega3" data-val="Ja">Ja</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this, 'omega3')" data-field="omega3" data-val="Ja">Ja</button>
             <button class="toggle-btn" onclick="toggleJaNee(this, 'omega3')" data-field="omega3" data-val="Nee">Nee</button>
           </div>
         </div>
         <div class="field">
           <label>Magnesium</label>
           <div class="toggle-group">
-            <button class="toggle-btn active-ja" onclick="toggleJaNee(this, 'magn')" data-field="magn" data-val="Ja">Ja</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this, 'magn')" data-field="magn" data-val="Ja">Ja</button>
             <button class="toggle-btn" onclick="toggleJaNee(this, 'magn')" data-field="magn" data-val="Nee">Nee</button>
           </div>
         </div>
         <div class="field">
           <label>Creatine</label>
           <div class="toggle-group">
-            <button class="toggle-btn active-ja" onclick="toggleJaNee(this, 'creatine')" data-field="creatine" data-val="Ja">Ja</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this, 'creatine')" data-field="creatine" data-val="Ja">Ja</button>
             <button class="toggle-btn" onclick="toggleJaNee(this, 'creatine')" data-field="creatine" data-val="Nee">Nee</button>
           </div>
         </div>
@@ -730,9 +730,9 @@
 <script>
 // ─── State ───────────────────────────────────────────────
 const state = {
-  jaNeeValues: { omega3: 'Ja', magn: 'Ja', creatine: 'Ja' },
-  selectedRow: null,   // { rowIndex, datum, dag }
-  sheetData: [],       // raw rows from the sheet
+  jaNeeValues: { omega3: '', magn: '', creatine: '' },
+  selectedRow: null,
+  sheetData: [],
   config: {}
 };
 
@@ -975,7 +975,7 @@ function autoSelectToday() {
   }
 }
 
-
+function onDatePickerChange() {
   const picker = document.getElementById('datePicker');
   const idx = picker.value;
   if (idx === '') { clearDate(); return; }
