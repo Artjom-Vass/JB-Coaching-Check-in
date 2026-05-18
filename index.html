@@ -927,6 +927,32 @@ function onDatePickerChange() {
   selectDate(parseInt(idx), datum, dag);
 }
 
+// ─── Reset all form fields to defaults ───────────────────
+function resetForm() {
+  document.getElementById('cardio').value = '0';
+  document.getElementById('bijzonderheden').value = '';
+  document.getElementById('gewicht').value = '';
+  document.getElementById('khd').value = '';
+  document.getElementById('eiwitten').value = '';
+  document.getElementById('vetten').value = '';
+  document.getElementById('vezels').value = '';
+  document.getElementById('water').value = '2.5';
+  document.getElementById('slaap').value = '';
+  document.getElementById('stappen').value = '';
+
+  // Reset dropdowns to first option
+  ['ontlasting','kracht','energie','honger','verwachting'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
+
+  // Reset Ja/Nee toggles to neutral (no selection)
+  ['omega3','magn','creatine'].forEach(field => {
+    state.jaNeeValues[field] = '';
+    document.querySelectorAll(`[data-field="${field}"]`).forEach(b => b.className = 'toggle-btn');
+  });
+}
+
 // ─── Step date with arrows ────────────────────────────────
 function stepDate(dir) {
   const picker = document.getElementById('datePicker');
@@ -955,27 +981,40 @@ function selectDate(rowIndex, datum, dag) {
   document.getElementById('selectedDateLabel').textContent = `📅 ${datum} (${dag})`;
   document.getElementById('formArea').style.display = 'block';
 
-  // Pre-fill ALL existing data
+  // Always reset first so empty sheet cells don't show previous day's data
+  resetForm();
+
   const row = state.sheetData[rowIndex] || [];
 
-  // Helper: set input value
+  // Helper: normalize number (sheet uses comma as decimal separator)
+  const num = (val) => val ? val.toString().replace(',', '.') : '';
+
+  // Helper: set input only if value exists
   const setVal = (id, val) => {
+    if (val === undefined || val === null || val === '') return;
     const el = document.getElementById(id);
-    if (el && val !== undefined && val !== '') el.value = val;
+    if (el) el.value = val;
   };
 
-  // Helper: set select by text match
+  // Helper: set number input (handles comma decimals)
+  const setNum = (id, val) => {
+    if (val === undefined || val === null || val === '') return;
+    const el = document.getElementById(id);
+    if (el) el.value = num(val);
+  };
+
+  // Helper: set select by text match (case insensitive)
   const setSelect = (id, val) => {
-    if (!val) return;
+    if (!val || val === '') return;
     const el = document.getElementById(id);
     if (!el) return;
-    const opt = Array.from(el.options).find(o => o.text.toLowerCase() === val.toLowerCase());
+    const opt = Array.from(el.options).find(o => o.text.toLowerCase() === val.toString().toLowerCase());
     if (opt) el.value = opt.value;
   };
 
-  // Helper: set Ja/Nee toggle
+  // Helper: set Ja/Nee toggle only if value exists in sheet
   const setToggle = (field, val) => {
-    if (!val) return;
+    if (!val || val === '') return;
     const btns = document.querySelectorAll(`[data-field="${field}"]`);
     btns.forEach(b => b.className = 'toggle-btn');
     const target = Array.from(btns).find(b => b.dataset.val === val);
@@ -985,28 +1024,28 @@ function selectDate(rowIndex, datum, dag) {
     }
   };
 
-  // Col mapping (0-based, sheet starts at col A=0 but A is empty):
-  // B=1 datum, C=2 dag, D=3 cardio, E=4 bijz, F=5 gewicht
-  // G=6 kcal(calc), H=7 KHD, I=8 eiwit, J=9 vet, K=10 vezels, L=11 water
-  // M=12 omega3, N=13 magn, O=14 creatine, P=15 ontlasting, Q=16 kracht
-  // R=17 energie, S=18 honger, T=19 slaap, U=20 stappen, V=21 verwachting
-  setVal('cardio',        row[3]);
+  // Col mapping (0-based):
+  // A=0(leeg) B=1 datum C=2 dag D=3 cardio E=4 bijz F=5 gewicht
+  // G=6 kcal(calc) H=7 KHD I=8 eiwit J=9 vet K=10 vezels L=11 water
+  // M=12 omega3 N=13 magn O=14 creatine P=15 ontlasting Q=16 kracht
+  // R=17 energie S=18 honger T=19 slaap U=20 stappen V=21 verwachting
+  setVal('cardio',         row[3]);
   setVal('bijzonderheden', row[4]);
-  setVal('gewicht',       row[5]);
-  setVal('khd',           row[7]);
-  setVal('eiwitten',      row[8]);
-  setVal('vetten',        row[9]);
-  setVal('vezels',        row[10]);
-  setVal('water',         row[11]);
-  setToggle('omega3',     row[12]);
-  setToggle('magn',       row[13]);
-  setToggle('creatine',   row[14]);
-  setSelect('ontlasting', row[15]);
-  setSelect('kracht',     row[16]);
-  setSelect('energie',    row[17]);
-  setSelect('honger',     row[18]);
-  setVal('slaap',         row[19]);
-  setVal('stappen',       row[20]);
+  setNum('gewicht',        row[5]);
+  setNum('khd',            row[7]);
+  setNum('eiwitten',       row[8]);
+  setNum('vetten',         row[9]);
+  setNum('vezels',         row[10]);
+  setNum('water',          row[11]);
+  setToggle('omega3',      row[12]);
+  setToggle('magn',        row[13]);
+  setToggle('creatine',    row[14]);
+  setSelect('ontlasting',  row[15]);
+  setSelect('kracht',      row[16]);
+  setSelect('energie',     row[17]);
+  setSelect('honger',      row[18]);
+  setVal('slaap',          row[19]);
+  setVal('stappen',        row[20]);
   setSelect('verwachting', row[21]);
 
   window.scrollTo({ top: document.getElementById('formArea').offsetTop - 80, behavior: 'smooth' });
