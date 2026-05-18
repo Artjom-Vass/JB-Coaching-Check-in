@@ -329,7 +329,7 @@ textarea { resize: vertical; min-height: 68px; font-size: 14px; }
 <header>
   <div class="logo">
     <span class="logo-mark">JB</span>
-    <span class="logo-text">Coaching</span>
+    <span class="logo-text" id="logoText">Coaching</span>
   </div>
   <div class="header-right">
     <div class="status-pill" id="statusPill">
@@ -599,6 +599,13 @@ const TOKEN_KEY      = 'jb_token_v2';
 function init() {
   const params = new URLSearchParams(window.location.search);
   state.sheetId = params.get('id') || null;
+
+  // Show participant name in header
+  const name = params.get('name') || '';
+  if (name) {
+    document.getElementById('logoText').textContent = 'Coaching · ' + decodeURIComponent(name);
+    document.title = 'JB Coaching · ' + decodeURIComponent(name);
+  }
 
   if (!state.sheetId) {
     document.getElementById('welcomeScreen').style.display = 'block';
