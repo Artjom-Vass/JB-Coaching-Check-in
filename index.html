@@ -841,7 +841,6 @@ async function loadDates() {
     renderDatePicker();
     autoSelectToday();
     setStatus('Verbonden', 'connected');
-    document.getElementById('loadDatesBtn').classList.add('show');
   } catch(e) {
     setStatus('Fout bij laden', 'error');
     showToast('❌ ' + e.message, 'error');
