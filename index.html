@@ -482,14 +482,10 @@
       <p class="info-text">Uit de URL: docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit</p>
     </div>
     <div class="config-field">
-      <label>Tabblad naam (bijv. Progressie)</label>
+      <label>Tabblad naam</label>
       <input type="text" id="sheetName" placeholder="Progressie" />
     </div>
-    <div class="config-field">
-      <label>Google OAuth Client ID</label>
-      <input type="text" id="clientId" placeholder="xxxx.apps.googleusercontent.com" />
-      <p class="info-text">Aanmaken via <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent);">Google Cloud Console</a> → APIs & Services → Credentials</p>
-    </div>
+    <input type="hidden" id="clientId" value="790818364616-hlc4fop5k83ttoaqg19hf3f8j9o5c063.apps.googleusercontent.com">
     <button class="save-config-btn" onclick="saveConfig()">💾 Opslaan & Verbinden</button>
   </div>
 
@@ -697,22 +693,32 @@ const state = {
   config: {}
 };
 
+// ─── App Config (hardcoded — no setup needed for users) ───
+const APP_CONFIG = {
+  clientId: '790818364616-hlc4fop5k83ttoaqg19hf3f8j9o5c063.apps.googleusercontent.com',
+  sheetId: '',   // ← VUL HIER JOUW SPREADSHEET ID IN
+  sheetName: 'Progressie'
+};
+
 // ─── Config ───────────────────────────────────────────────
 function loadConfig() {
-  const c = localStorage.getItem('jb_config');
-  if (c) {
-    state.config = JSON.parse(c);
-    document.getElementById('sheetId').value = state.config.sheetId || '';
-    document.getElementById('sheetName').value = state.config.sheetName || 'Progressie';
-    document.getElementById('clientId').value = state.config.clientId || '';
-  }
+  // Start from hardcoded defaults, allow localStorage overrides (for admin)
+  const saved = JSON.parse(localStorage.getItem('jb_config') || '{}');
+  state.config = {
+    clientId: APP_CONFIG.clientId,
+    sheetId:  saved.sheetId  || APP_CONFIG.sheetId,
+    sheetName: saved.sheetName || APP_CONFIG.sheetName
+  };
+  document.getElementById('sheetId').value = state.config.sheetId;
+  document.getElementById('sheetName').value = state.config.sheetName;
+  document.getElementById('clientId').value = state.config.clientId;
 }
 
 function saveConfig() {
   state.config = {
+    clientId: APP_CONFIG.clientId,
     sheetId: document.getElementById('sheetId').value.trim(),
     sheetName: document.getElementById('sheetName').value.trim() || 'Progressie',
-    clientId: document.getElementById('clientId').value.trim()
   };
   localStorage.setItem('jb_config', JSON.stringify(state.config));
   toggleConfig();
@@ -1021,11 +1027,11 @@ function showToast(msg, type) {
 
 // ─── Init ─────────────────────────────────────────────────
 loadConfig();
-if (state.config.clientId) {
+if (state.config.sheetId) {
   initGoogleAuth();
 } else {
   document.getElementById('configPanel').classList.add('visible');
-  setStatus('Stel in om te starten', 'default');
+  setStatus('Vul Spreadsheet ID in', 'default');
 }
 </script>
 </body>
