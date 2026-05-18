@@ -724,14 +724,47 @@ function toggleConfig() {
   p.classList.toggle('visible');
 }
 
+
 // ─── Google Auth ───────────────────────────────────────────
 let tokenClient;
 let accessToken = null;
+let tokenExpiry = 0;
+
+function saveToken(token, expiresIn) {
+  accessToken = token;
+  tokenExpiry = Date.now() + (expiresIn - 60) * 1000; // expire 1 min early
+  localStorage.setItem('jb_token', JSON.stringify({ token, expiry: tokenExpiry }));
+}
+
+function loadToken() {
+  try {
+    const t = JSON.parse(localStorage.getItem('jb_token') || 'null');
+    if (t && t.expiry > Date.now()) {
+      accessToken = t.token;
+      tokenExpiry = t.expiry;
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+function clearToken() {
+  accessToken = null;
+  tokenExpiry = 0;
+  localStorage.removeItem('jb_token');
+}
 
 function initGoogleAuth() {
   if (!state.config.clientId) {
     setStatus('Instellingen nodig', 'default');
     document.getElementById('configPanel').classList.add('visible');
+    return;
+  }
+  // Check cached token first
+  if (loadToken()) {
+    setStatus('Verbonden', 'connected');
+    document.getElementById('loadDatesBtn').style.display = 'flex';
+    loadDates();
     return;
   }
   // Load Google Identity Services dynamically
@@ -751,21 +784,33 @@ function setupTokenClient() {
     scope: 'https://www.googleapis.com/auth/spreadsheets',
     callback: (resp) => {
       if (resp.error) { setStatus('Auth mislukt', 'error'); return; }
-      accessToken = resp.access_token;
+      saveToken(resp.access_token, resp.expires_in || 3600);
       setStatus('Verbonden', 'connected');
       document.getElementById('loadDatesBtn').style.display = 'flex';
       loadDates();
     }
   });
-  // Try silent token first, else prompt
+  // Try silent (no popup) first
   tokenClient.requestAccessToken({ prompt: '' });
 }
 
 function ensureAuth(cb) {
-  if (accessToken) { cb(); return; }
-  if (!tokenClient) { initGoogleAuth(); return; }
-  tokenClient.requestAccessToken({ prompt: 'consent' });
+  if (accessToken && tokenExpiry > Date.now()) { cb(); return; }
+  clearToken();
+  if (!tokenClient) {
+    if (!window.google) {
+      const s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.onload = () => { setupTokenClient(); };
+      document.head.appendChild(s);
+    } else {
+      setupTokenClient();
+    }
+    return;
+  }
+  tokenClient.requestAccessToken({ prompt: '' });
 }
+
 
 // ─── Status ───────────────────────────────────────────────
 function setStatus(text, type) {
