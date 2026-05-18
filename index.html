@@ -401,9 +401,12 @@ textarea { resize: vertical; min-height: 68px; font-size: 14px; }
   <div id="formArea" style="display:none">
 
     <!-- Fit sync bar -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
       <button class="fit-sync-btn" onclick="syncFit()">
         <span id="fitSyncIcon">⚡</span> Sync Google Fit
+      </button>
+      <button class="fit-sync-btn" onclick="debugFitSources()" style="opacity:0.6;font-size:10px;">
+        🔍 Debug
       </button>
       <div id="fitStatus" style="display:none;font-size:11px;color:var(--green);font-family:var(--mono);flex:1;"></div>
     </div>
@@ -1186,6 +1189,27 @@ function datumToEpoch(datum) {
   const start = new Date(y, m, d, 0, 0, 0).getTime();
   const end   = new Date(y, m, d, 23, 59, 59).getTime();
   return { start, end };
+}
+
+async function debugFitSources() {
+  if (!accessToken) { showToast('Eerst inloggen', 'error'); return; }
+  setFitStatus('🔍 Data sources ophalen...');
+  try {
+    const res  = await fetch('https://www.googleapis.com/fitness/v1/users/me/dataSources', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const data = await res.json();
+    const sources = (data.dataSource || []).map(s => s.dataStreamId).join('\n');
+    console.log('=== AVAILABLE FIT DATA SOURCES ===\n' + sources);
+    // Show in UI
+    setFitStatus('✓ Check console (F12) voor data sources');
+    // Also show in alert for mobile
+    const types = [...new Set((data.dataSource || []).map(s => s.dataType?.name).filter(Boolean))];
+    showToast('Data types: ' + types.slice(0,5).join(', '), '');
+    setTimeout(() => setFitStatus(''), 8000);
+  } catch(e) {
+    setFitStatus('❌ ' + e.message);
+  }
 }
 
 async function syncFit() {
