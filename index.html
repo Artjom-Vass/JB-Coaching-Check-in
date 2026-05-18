@@ -123,11 +123,15 @@
 
   /* ── Date Selector ── */
   .date-section {
-    background: var(--surface);
+    background: rgba(24,28,39,0.97);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px;
+    padding: 14px 16px;
     margin-bottom: 20px;
+    position: sticky;
+    top: 57px;
+    z-index: 90;
+    backdrop-filter: blur(12px);
   }
   .section-label {
     font-family: var(--font-mono);
@@ -880,6 +884,7 @@ async function loadDates() {
 
     state.sheetData = data.values || [];
     renderDateGrid();
+    autoSelectToday();
     setStatus('Verbonden', 'connected');
     document.getElementById('loadDatesBtn').style.display = 'flex';
   } catch(e) {
@@ -917,7 +922,25 @@ function renderDateGrid() {
   }
 }
 
-function onDatePickerChange() {
+function autoSelectToday() {
+  // Format today as dd/mmm/yy to match sheet format e.g. "18/mei/26"
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const monthsNL = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+  const month = monthsNL[now.getMonth()];
+  const year = String(now.getFullYear()).slice(-2);
+  const todayStr = `${day}/${month}/${year}`;
+
+  const idx = state.sheetData.findIndex(row => (row[1] || '').trim() === todayStr);
+  if (idx !== -1) {
+    const picker = document.getElementById('datePicker');
+    if (picker) picker.value = idx;
+    const row = state.sheetData[idx];
+    selectDate(idx, (row[1] || '').trim(), (row[2] || '').trim());
+  }
+}
+
+
   const picker = document.getElementById('datePicker');
   const idx = picker.value;
   if (idx === '') { clearDate(); return; }
@@ -979,7 +1002,19 @@ function selectDate(rowIndex, datum, dag) {
   const bar = document.getElementById('selectedDateBar');
   bar.classList.add('visible');
   document.getElementById('selectedDateLabel').textContent = `📅 ${datum} (${dag})`;
-  document.getElementById('formArea').style.display = 'block';
+  const formArea = document.getElementById('formArea');
+  formArea.style.display = 'block';
+
+  // Reset saved state when switching dates
+  isSaved = false;
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '✓ Opslaan in Google Sheets';
+  btn.style.background = '';
+  btn.style.color = '';
+
+  // Wire change listeners to detect edits after save
+  formArea.oninput = markDirty;
+  formArea.onchange = markDirty;
 
   // Always reset first so empty sheet cells don't show previous day's data
   resetForm();
@@ -1060,6 +1095,18 @@ function clearDate() {
   if (picker) picker.value = '';
 }
 
+// ─── Dirty state (unsaved changes) ───────────────────────
+let isSaved = false;
+
+function markDirty() {
+  if (!isSaved) return; // already in unsaved state
+  isSaved = false;
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '✓ Opslaan in Google Sheets';
+  btn.style.background = '';
+  btn.style.color = '';
+}
+
 // ─── Toggle Ja/Nee ────────────────────────────────────────
 function toggleJaNee(btn, field) {
   const group = btn.closest('.toggle-group');
@@ -1067,6 +1114,7 @@ function toggleJaNee(btn, field) {
   const val = btn.dataset.val;
   state.jaNeeValues[field] = val;
   btn.classList.add(val === 'Ja' ? 'active-ja' : 'active-nee');
+  markDirty();
 }
 
 // ─── Step counter ─────────────────────────────────────────
@@ -1074,6 +1122,7 @@ function stepField(id, delta) {
   const el = document.getElementById(id);
   const val = parseFloat(el.value) || 0;
   el.value = Math.max(0, +(val + delta).toFixed(1));
+  markDirty();
 }
 
 // ─── Submit ───────────────────────────────────────────────
@@ -1136,14 +1185,25 @@ async function submitForm() {
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
 
-    showToast('✅ Opgeslagen!', 'success');
-    clearDate();
-    await loadDates();
+    // Update in-memory sheetData so "ingevuld" marker updates without reload
+    const row = state.sheetData[state.selectedRow.rowIndex] || [];
+    row[5] = v('gewicht'); // mark as filled
+    state.sheetData[state.selectedRow.rowIndex] = row;
+    renderDateGrid();
+    // Re-sync picker to current date (renderDateGrid rebuilds options)
+    const picker = document.getElementById('datePicker');
+    if (picker) picker.value = state.selectedRow.rowIndex;
+
+    // Green success button — resets when user changes anything
+    isSaved = true;
+    btn.innerHTML = '✓ Opgeslagen!';
+    btn.style.background = 'var(--accent2)';
+    btn.style.color = '#0f1117';
+
   } catch(e) {
     showToast('❌ ' + e.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '✓ Opslaan in Google Sheets';
   }
 }
 
