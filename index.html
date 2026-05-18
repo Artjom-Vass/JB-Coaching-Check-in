@@ -99,40 +99,16 @@ header {
 }
 .icon-btn:hover { border-color: var(--gold); color: var(--gold); }
 
-/* ── User pill ── */
-.user-pill-wrap { position: relative; }
-.user-pill {
-  font-family: var(--mono);
-  font-size: 10px; padding: 4px 10px;
-  border-radius: 20px; border: 1px solid var(--border);
-  color: var(--muted); background: transparent;
-  display: flex; align-items: center; gap: 5px;
-  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+/* ── Logout button ── */
+.logout-btn {
+  font-family: var(--mono); font-size: 10px;
+  padding: 4px 10px; border-radius: 20px;
+  border: 1px solid rgba(224,92,92,0.3);
+  background: rgba(224,92,92,0.08);
+  color: var(--red); cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
 }
-.user-pill:hover { border-color: var(--gold); color: var(--gold); }
-.user-pill.logged-in { color: var(--text); border-color: var(--border); }
-.user-pill-arrow { font-size: 9px; transition: transform 0.2s; }
-.user-pill.open .user-pill-arrow { transform: rotate(180deg); }
-.user-dropdown {
-  display: none; position: absolute; right: 0; top: calc(100% + 8px);
-  background: var(--s2); border: 1px solid var(--border);
-  border-radius: 10px; padding: 10px; min-width: 180px;
-  z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-.user-dropdown.open { display: block; }
-.user-dropdown-name {
-  font-size: 12px; color: var(--label);
-  padding: 4px 6px 10px; border-bottom: 1px solid var(--border);
-  margin-bottom: 8px; word-break: break-all; line-height: 1.5;
-}
-.user-dropdown-logout {
-  width: 100%; padding: 8px 10px;
-  background: rgba(224,92,92,0.1); border: 1px solid rgba(224,92,92,0.3);
-  border-radius: 7px; color: var(--red);
-  font-family: var(--font); font-size: 13px;
-  cursor: pointer; text-align: left; transition: background 0.15s;
-}
-.user-dropdown-logout:hover { background: rgba(224,92,92,0.2); }
+.logout-btn:hover { background: rgba(224,92,92,0.18); }
 
 
 main { max-width: 520px; margin: 0 auto; padding: 16px 14px 100px; }
@@ -371,16 +347,10 @@ textarea { resize: vertical; min-height: 68px; font-size: 14px; }
       <div class="dot"></div>
       <span id="statusText">Niet verbonden</span>
     </div>
-    <div class="user-pill-wrap" id="userPillWrap">
-      <button class="user-pill" id="userPill" onclick="toggleUserMenu()">
-        <span id="userPillLabel">Login</span>
-        <span class="user-pill-arrow" id="userPillArrow">▾</span>
-      </button>
-      <div class="user-dropdown" id="userDropdown">
-        <div class="user-dropdown-name" id="userDropdownName">—</div>
-        <button class="user-dropdown-logout" onclick="logout()">🚪 Uitloggen</button>
-      </div>
+    <div class="status-pill" id="namePill" style="display:none">
+      <span id="namePillLabel"></span>
     </div>
+    <button class="logout-btn" id="logoutBtn" onclick="logout()" style="display:none">Uitloggen</button>
   </div>
 </header>
 
@@ -665,8 +635,10 @@ function init() {
   // Try cached token
   if (loadToken()) {
     setStatus('Verbonden', 'connected');
-    const email = localStorage.getItem('jb_user_email');
-    if (email) setUserPill(email);
+    // Try cached email first, then fetch fresh
+    const cachedEmail = localStorage.getItem('jb_user_email');
+    if (cachedEmail) setUserPill(cachedEmail);
+    fetchUserEmail(accessToken);
     showDateSection();
     loadDates();
   } else {
@@ -812,35 +784,17 @@ function showToast(msg, type) {
   setTimeout(() => t.classList.remove('show'), type === 'error' ? 6000 : 3000);
 }
 
-// ─── User pill ────────────────────────────────────────────
-function toggleUserMenu() {
-  const pill     = document.getElementById('userPill');
-  const dropdown = document.getElementById('userDropdown');
-  const isOpen   = dropdown.classList.contains('open');
-  pill.classList.toggle('open', !isOpen);
-  dropdown.classList.toggle('open', !isOpen);
-  if (!isOpen) {
-    setTimeout(() => document.addEventListener('click', closeUserMenu, { once: true }), 10);
-  }
-}
-
-function closeUserMenu() {
-  document.getElementById('userPill').classList.remove('open');
-  document.getElementById('userDropdown').classList.remove('open');
-}
-
 function setUserPill(email) {
-  const pill  = document.getElementById('userPill');
-  const label = document.getElementById('userPillLabel');
-  const name  = document.getElementById('userDropdownName');
+  const namePill  = document.getElementById('namePill');
+  const nameLabel = document.getElementById('namePillLabel');
+  const logoutBtn = document.getElementById('logoutBtn');
   if (email) {
-    label.textContent = email.split('@')[0];
-    name.textContent  = email;
-    pill.classList.add('logged-in');
+    nameLabel.textContent = email.split('@')[0];
+    namePill.style.display  = 'flex';
+    logoutBtn.style.display = 'block';
   } else {
-    label.textContent = 'Login';
-    name.textContent  = '—';
-    pill.classList.remove('logged-in');
+    namePill.style.display  = 'none';
+    logoutBtn.style.display = 'none';
   }
 }
 
@@ -854,7 +808,6 @@ function logout() {
   showLoginBtn();
   document.getElementById('formArea').style.display = 'none';
   document.getElementById('dateSection').style.display = 'none';
-  closeUserMenu();
 }
 
 // ═══════════════════════════════════════════════
