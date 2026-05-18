@@ -356,10 +356,6 @@ textarea { resize: vertical; min-height: 68px; font-size: 14px; }
     <span class="logo-text">Coaching</span>
   </div>
   <div class="header-right">
-    <div class="status-pill" id="statusPill">
-      <div class="dot"></div>
-      <span id="statusText">Niet verbonden</span>
-    </div>
     <div class="status-pill" id="namePill" style="display:none">
       <span id="namePillLabel"></span>
     </div>
@@ -405,9 +401,6 @@ textarea { resize: vertical; min-height: 68px; font-size: 14px; }
       <button class="fit-sync-btn" onclick="syncFit()">
         <span id="fitSyncIcon">⚡</span> Sync Google Fit
       </button>
-      <button class="fit-sync-btn" onclick="debugFitSources()" style="opacity:0.6;font-size:10px;">
-        🔍 Debug
-      </button>
       <div id="fitStatus" style="display:none;font-size:11px;color:var(--green);font-family:var(--mono);flex:1;"></div>
     </div>
 
@@ -441,7 +434,12 @@ textarea { resize: vertical; min-height: 68px; font-size: 14px; }
     <!-- Voeding -->
     <div class="form-section">
       <div class="section-label">Voeding</div>
-      <p class="info-text" style="margin-bottom:12px">Kcal wordt berekend in het sheet · Doelen: 181g KHD · 147g Eiwit · 65g Vet · 30-40g Vezels</p>
+      <p class="info-text" id="doelTekst" style="margin-bottom:12px">Doelen laden...</p>
+      <div class="field">
+        <label>Dagelijkse kcal (berekend)</label>
+        <input type="text" id="kcal" placeholder="—" readonly
+          style="background:var(--s3);color:var(--gold);font-family:var(--mono);font-size:16px;text-align:center;cursor:default;">
+      </div>
       <div class="field-row">
         <div class="field">
           <label>KHD (gram)</label>
@@ -558,16 +556,6 @@ textarea { resize: vertical; min-height: 68px; font-size: 14px; }
           <label>Aantal stappen</label>
           <input type="number" id="stappen" placeholder="8000" inputmode="numeric">
         </div>
-      </div>
-      <div class="field">
-        <label>Verwachting</label>
-        <select id="verwachting">
-          <option value=""></option>
-          <option>0,0</option>
-          <option>Positief</option>
-          <option>Neutraal</option>
-          <option>Negatief</option>
-        </select>
       </div>
     </div>
 
@@ -774,9 +762,37 @@ function ensureAuth(cb) {
 // ═══════════════════════════════════════════════
 function setStatus(text, type) {
   const pill = document.getElementById('statusPill');
-  const span = document.getElementById('statusText');
-  pill.className = 'status-pill ' + (type || '');
-  span.textContent = text;
+  if (pill) {
+    pill.className = 'status-pill ' + (type || '');
+    const span = document.getElementById('statusText');
+    if (span) span.textContent = text;
+  }
+}
+
+// ─── Load goals from sheet row 2 ─────────────────────────
+async function loadDoelen() {
+  if (!accessToken || !state.sheetId) return;
+  try {
+    const range = encodeURIComponent(`${PROGRESSIE_TAB}!G2:K2`);
+    const res   = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const data = await res.json();
+    const row  = data.values?.[0] || [];
+    // G2=kcal, H2=khd, I2=eiwitten, J2=vetten, K2=vezels
+    const kcal    = row[0] || '—';
+    const khd     = row[1] || '—';
+    const eiwit   = row[2] || '—';
+    const vet     = row[3] || '—';
+    const vezels  = row[4] || '—';
+    const el = document.getElementById('doelTekst');
+    if (el) el.textContent = `Doelen: ${kcal} kcal · ${khd}g KHD · ${eiwit}g Eiwit · ${vet}g Vet · ${vezels}g Vezels`;
+    // Store for reference
+    state.doelen = { kcal, khd, eiwit, vet, vezels };
+  } catch(e) {
+    console.error('loadDoelen:', e);
+  }
 }
 
 function showDateSection() {
@@ -844,6 +860,7 @@ async function loadDates() {
     renderDatePicker();
     autoSelectToday();
     setStatus('Verbonden', 'connected');
+    loadDoelen();
   } catch(e) {
     setStatus('Fout bij laden', 'error');
     showToast('❌ ' + e.message, 'error');
@@ -952,6 +969,9 @@ function selectDate(rowIndex, datum, dag) {
   setVal('cardio',         row[3]);
   setVal('bijzonderheden', row[4]);
   setTxt('gewicht',        row[5]);
+  // G=6 kcal (read-only display)
+  const kcalEl = document.getElementById('kcal');
+  if (kcalEl) kcalEl.value = row[6] ? row[6] + ' kcal' : '—';
   setNum('khd',            row[7]);
   setNum('eiwitten',       row[8]);
   setNum('vetten',         row[9]);
@@ -966,7 +986,6 @@ function selectDate(rowIndex, datum, dag) {
   setSelect('honger',      row[18]);
   setVal('slaap',          row[19]);
   setVal('stappen',        row[20]);
-  setSelect('verwachting', row[21]);
 
   // Sunday: show metingen section
   const sunday = dag.toLowerCase() === 'zo';
@@ -994,7 +1013,7 @@ function resetForm() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  ['ontlasting','kracht','energie','honger','verwachting'].forEach(id => {
+  ['ontlasting','kracht','energie','honger'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
@@ -1071,7 +1090,6 @@ async function submitForm() {
     { range: `${sheet}!S${rowNum}`, values: [[sv('honger')]] },
     { range: `${sheet}!T${rowNum}`, values: [[v('slaap')]] },
     { range: `${sheet}!U${rowNum}`, values: [[v('stappen')]] },
-    { range: `${sheet}!V${rowNum}`, values: [[sv('verwachting')]] },
   ];
 
   try {
@@ -1284,21 +1302,23 @@ async function fetchFitData(datum) {
     // ── Nutrition (MFP via Health Connect) ───────
     const nutrition = await fitAggregate('com.google.nutrition', start, end);
     const nutPts = nutrition.bucket?.[0]?.dataset?.[0]?.point || [];
-    let khd = 0, eiwit = 0, vet = 0;
+    let khd = 0, eiwit = 0, vet = 0, vezels = 0;
     nutPts.forEach(pt => {
       pt.value?.forEach(v => {
         (v.mapVal || []).forEach(entry => {
           const k   = entry.key;
           const val = entry.value?.fpVal || 0;
-          if (k === 'carbs.total')  khd   += val;
-          if (k === 'protein')      eiwit += val;
-          if (k === 'fat.total')    vet   += val;
+          if (k === 'carbs.total')  khd    += val;
+          if (k === 'protein')      eiwit  += val;
+          if (k === 'fat.total')    vet    += val;
+          if (k === 'dietary_fiber') vezels += val;
         });
       });
     });
-    if (khd > 0)   results.khd   = Math.round(khd);
-    if (eiwit > 0) results.eiwit = Math.round(eiwit);
-    if (vet > 0)   results.vet   = Math.round(vet);
+    if (khd > 0)    results.khd    = Math.round(khd);
+    if (eiwit > 0)  results.eiwit  = Math.round(eiwit);
+    if (vet > 0)    results.vet    = Math.round(vet);
+    if (vezels > 0) results.vezels = Math.round(vezels);
 
     console.log('Fit results:', results);
 
@@ -1332,6 +1352,10 @@ async function fetchFitData(datum) {
     if (results.vet > 0) {
       document.getElementById('vetten').value = results.vet;
       filled.push('vetten');
+    }
+    if (results.vezels > 0) {
+      document.getElementById('vezels').value = results.vezels;
+      filled.push('vezels');
     }
 
     if (filled.length > 0) {
