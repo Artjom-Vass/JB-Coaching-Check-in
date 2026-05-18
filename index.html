@@ -542,7 +542,7 @@
       <div class="section-label">Gewicht</div>
       <div style="display:flex;align-items:center;justify-content:center;padding:8px 0;">
         <div class="weight-display">
-          <input type="number" id="gewicht" step="0.1" min="40" max="200" placeholder="81.5" inputmode="decimal">
+          <input type="text" id="gewicht" placeholder="81,5" inputmode="decimal" pattern="[0-9]*[,.]?[0-9]*">
           <span class="weight-unit">kg</span>
         </div>
       </div>
@@ -1193,7 +1193,7 @@ async function submitForm() {
   const updates = [
     { range: `${state.config.sheetName}!D${rowNum}`, values: [[v('cardio')]] },
     { range: `${state.config.sheetName}!E${rowNum}`, values: [[v('bijzonderheden')]] },
-    { range: `${state.config.sheetName}!F${rowNum}`, values: [[v('gewicht')]] },
+    { range: `${state.config.sheetName}!F${rowNum}`, values: [[vGewicht()]] },
     { range: `${state.config.sheetName}!H${rowNum}`, values: [[v('khd')]] },
     { range: `${state.config.sheetName}!I${rowNum}`, values: [[v('eiwitten')]] },
     { range: `${state.config.sheetName}!J${rowNum}`, values: [[v('vetten')]] },
@@ -1228,7 +1228,7 @@ async function submitForm() {
 
     // Update in-memory sheetData so "ingevuld" marker updates without reload
     const row = state.sheetData[state.selectedRow.rowIndex] || [];
-    row[5] = v('gewicht'); // mark as filled
+    row[5] = vGewicht(); // mark as filled
     state.sheetData[state.selectedRow.rowIndex] = row;
     renderDateGrid();
     // Re-sync picker to current date (renderDateGrid rebuilds options)
@@ -1250,6 +1250,12 @@ async function submitForm() {
 
 function v(id) {
   return document.getElementById(id)?.value ?? '';
+}
+// Gewicht: accepteer komma of punt, schrijf altijd met komma naar sheet
+function vGewicht() {
+  const raw = document.getElementById('gewicht')?.value ?? '';
+  // Replace dot with comma for Dutch sheet format
+  return raw.replace('.', ',');
 }
 function sv(id) {
   const el = document.getElementById(id);
