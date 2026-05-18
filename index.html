@@ -1199,7 +1199,7 @@ async function syncFit() {
   document.getElementById('fitSyncIcon').textContent = '⚡';
 }
 
-
+async function fetchFitData(datum) {
   if (!accessToken) return;
   const { start, end } = datumToEpoch(datum);
 
