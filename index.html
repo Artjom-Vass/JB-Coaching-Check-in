@@ -389,6 +389,30 @@
     color: var(--muted);
   }
 
+  .date-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .date-nav select { flex: 1; }
+  .nav-arrow {
+    width: 38px; height: 38px;
+    flex-shrink: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, color 0.15s;
+    line-height: 1;
+  }
+  .nav-arrow:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
   /* Empty / loading state */
   .empty-state {
     text-align: center;
@@ -492,12 +516,15 @@
   <!-- Date picker -->
   <div class="date-section">
     <div class="section-label">Selecteer datum</div>
-    <select id="datePicker" onchange="onDatePickerChange()" style="display:none">
-      <option value="">— Kies een datum —</option>
-    </select>
-    <div id="datePickerPlaceholder" class="empty-state">
-      <div class="icon">📅</div>
-      <div>Verbind eerst met Google Sheets<br>om datums te laden</div>
+    <div class="date-nav">
+      <button class="nav-arrow" onclick="stepDate(-1)" title="Vorige datum">‹</button>
+      <select id="datePicker" onchange="onDatePickerChange()" style="display:none">
+        <option value="">— Kies een datum —</option>
+      </select>
+      <div id="datePickerPlaceholder" class="empty-state" style="flex:1;padding:10px 0;">
+        <div>Verbind eerst met Google Sheets om datums te laden</div>
+      </div>
+      <button class="nav-arrow" onclick="stepDate(1)" title="Volgende datum">›</button>
     </div>
     <button class="load-btn" id="loadDatesBtn" onclick="loadDates()" style="display:none">
       🔄 Datums vernieuwen
@@ -888,9 +915,27 @@ function onDatePickerChange() {
   selectDate(parseInt(idx), datum, dag);
 }
 
+// ─── Step date with arrows ────────────────────────────────
+function stepDate(dir) {
+  const picker = document.getElementById('datePicker');
+  const opts = Array.from(picker.options).filter(o => o.value !== '');
+  if (!opts.length) return;
+  const currentVal = picker.value;
+  const currentIdx = opts.findIndex(o => o.value === currentVal);
+  let nextIdx = currentIdx + dir;
+  if (nextIdx < 0) nextIdx = 0;
+  if (nextIdx >= opts.length) nextIdx = opts.length - 1;
+  picker.value = opts[nextIdx].value;
+  onDatePickerChange();
+}
+
 // ─── Select a date ────────────────────────────────────────
 function selectDate(rowIndex, datum, dag) {
   state.selectedRow = { rowIndex, datum, dag };
+
+  // Sync dropdown
+  const picker = document.getElementById('datePicker');
+  picker.value = rowIndex;
 
   // Show bar + form
   const bar = document.getElementById('selectedDateBar');
@@ -898,16 +943,59 @@ function selectDate(rowIndex, datum, dag) {
   document.getElementById('selectedDateLabel').textContent = `📅 ${datum} (${dag})`;
   document.getElementById('formArea').style.display = 'block';
 
-  // Pre-fill existing data if any
+  // Pre-fill ALL existing data
   const row = state.sheetData[rowIndex] || [];
-  if (row[3])  document.getElementById('cardio').value = row[3];
-  if (row[4])  document.getElementById('bijzonderheden').value = row[4];
-  if (row[5])  document.getElementById('gewicht').value = row[5];
-  if (row[7])  document.getElementById('khd').value = row[7];
-  if (row[8])  document.getElementById('eiwitten').value = row[8];
-  if (row[9])  document.getElementById('vetten').value = row[9];
-  if (row[10]) document.getElementById('vezels').value = row[10];
-  if (row[11]) document.getElementById('water').value = row[11];
+
+  // Helper: set input value
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && val !== '') el.value = val;
+  };
+
+  // Helper: set select by text match
+  const setSelect = (id, val) => {
+    if (!val) return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    const opt = Array.from(el.options).find(o => o.text.toLowerCase() === val.toLowerCase());
+    if (opt) el.value = opt.value;
+  };
+
+  // Helper: set Ja/Nee toggle
+  const setToggle = (field, val) => {
+    if (!val) return;
+    const btns = document.querySelectorAll(`[data-field="${field}"]`);
+    btns.forEach(b => b.className = 'toggle-btn');
+    const target = Array.from(btns).find(b => b.dataset.val === val);
+    if (target) {
+      state.jaNeeValues[field] = val;
+      target.classList.add(val === 'Ja' ? 'active-ja' : 'active-nee');
+    }
+  };
+
+  // Col mapping (0-based, sheet starts at col A=0 but A is empty):
+  // B=1 datum, C=2 dag, D=3 cardio, E=4 bijz, F=5 gewicht
+  // G=6 kcal(calc), H=7 KHD, I=8 eiwit, J=9 vet, K=10 vezels, L=11 water
+  // M=12 omega3, N=13 magn, O=14 creatine, P=15 ontlasting, Q=16 kracht
+  // R=17 energie, S=18 honger, T=19 slaap, U=20 stappen, V=21 verwachting
+  setVal('cardio',        row[3]);
+  setVal('bijzonderheden', row[4]);
+  setVal('gewicht',       row[5]);
+  setVal('khd',           row[7]);
+  setVal('eiwitten',      row[8]);
+  setVal('vetten',        row[9]);
+  setVal('vezels',        row[10]);
+  setVal('water',         row[11]);
+  setToggle('omega3',     row[12]);
+  setToggle('magn',       row[13]);
+  setToggle('creatine',   row[14]);
+  setSelect('ontlasting', row[15]);
+  setSelect('kracht',     row[16]);
+  setSelect('energie',    row[17]);
+  setSelect('honger',     row[18]);
+  setVal('slaap',         row[19]);
+  setVal('stappen',       row[20]);
+  setSelect('verwachting', row[21]);
 
   window.scrollTo({ top: document.getElementById('formArea').offsetTop - 80, behavior: 'smooth' });
 }
