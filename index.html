@@ -496,11 +496,12 @@
   <!-- Date picker -->
   <div class="date-section">
     <div class="section-label">Selecteer datum</div>
-    <div id="dateGrid" class="date-grid">
-      <div class="empty-state" style="grid-column:1/-1">
-        <div class="icon">📅</div>
-        <div>Verbind eerst met Google Sheets<br>om datums te laden</div>
-      </div>
+    <select id="datePicker" onchange="onDatePickerChange()" style="display:none">
+      <option value="">— Kies een datum —</option>
+    </select>
+    <div id="datePickerPlaceholder" class="empty-state">
+      <div class="icon">📅</div>
+      <div>Verbind eerst met Google Sheets<br>om datums te laden</div>
     </div>
     <button class="load-btn" id="loadDatesBtn" onclick="loadDates()" style="display:none">
       🔄 Datums vernieuwen
@@ -615,19 +616,20 @@
           <label>Ontlasting</label>
           <select id="ontlasting">
             <option>Normaal</option>
+            <option>Zacht</option>
+            <option>Dun</option>
+            <option>Hard</option>
             <option>Geen</option>
-            <option>Diarree</option>
-            <option>Verstopping</option>
           </select>
         </div>
         <div class="field">
           <label>Kracht</label>
           <select id="kracht">
             <option>Normaal</option>
-            <option>Goed</option>
             <option>Hoog</option>
-            <option>Laag</option>
-            <option>Slecht</option>
+            <option>goed</option>
+            <option>matig</option>
+            <option>laag</option>
           </select>
         </div>
       </div>
@@ -635,11 +637,10 @@
         <div class="field">
           <label>Energie</label>
           <select id="energie">
-            <option>Goed</option>
-            <option>Normaal</option>
+            <option>goed</option>
             <option>Hoog</option>
-            <option>Laag</option>
-            <option>Slecht</option>
+            <option>matig</option>
+            <option>laag</option>
           </select>
         </div>
         <div class="field">
@@ -797,52 +798,48 @@ async function loadDates() {
   }
 }
 
-// ─── Render date chips ────────────────────────────────────
+
+// ─── Render date dropdown ─────────────────────────────────
 function renderDateGrid() {
-  const grid = document.getElementById('dateGrid');
-  grid.innerHTML = '';
+  const picker = document.getElementById('datePicker');
+  const placeholder = document.getElementById('datePickerPlaceholder');
+  picker.innerHTML = '<option value="">— Kies een datum —</option>';
 
-  // Col mapping (0-based): A=0(leeg), B=1 datum, C=2 dag, D=3 cardio, E=4 bijz, F=5 gewicht
-  // G=6 kcal(calc), H=7 KHD, I=8 eiwit, J=9 vet, K=10 vezels, L=11 water
-  // M=12 omega3, N=13 magn, O=14 creatine, P=15 ontlasting, Q=16 kracht, R=17 energie
-  // S=18 honger, T=19 slaap, U=20 stappen, V=21 verwachting
-  let count = 0;
-
+  let found = 0;
   state.sheetData.forEach((row, idx) => {
     const datum = (row[1] || '').trim(); // col B
     if (!datum) return;
     const dag = (row[2] || '').trim();   // col C
-    const gewicht = (row[5] || '').trim(); // col F
+    const gewicht = (row[5] || '').trim();
     const isFilled = gewicht !== '';
 
-    const chip = document.createElement('div');
-    chip.className = 'date-chip' + (isFilled ? ' filled' : '');
-    chip.innerHTML = `
-      <span class="chip-date">${datum}</span>
-      <span class="chip-day">${dag}</span>
-      ${isFilled ? '<span class="chip-badge">✓ ingevuld</span>' : ''}
-    `;
-    if (!isFilled) {
-      chip.onclick = () => selectDate(idx, datum, dag);
-    }
-    grid.appendChild(chip);
-    count++;
-    if (count >= 14) return; // show max 14 rows
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = isFilled ? `✓  ${datum} (${dag})` : `${datum} (${dag})`;
+    if (isFilled) opt.style.color = '#3ee6a0';
+    picker.appendChild(opt);
+    found++;
   });
 
-  if (count === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔍</div><div>Geen datums gevonden in het sheet</div></div>';
+  if (found > 0) {
+    picker.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
   }
+}
+
+function onDatePickerChange() {
+  const picker = document.getElementById('datePicker');
+  const idx = picker.value;
+  if (idx === '') { clearDate(); return; }
+  const row = state.sheetData[parseInt(idx)] || [];
+  const datum = (row[1] || '').trim();
+  const dag = (row[2] || '').trim();
+  selectDate(parseInt(idx), datum, dag);
 }
 
 // ─── Select a date ────────────────────────────────────────
 function selectDate(rowIndex, datum, dag) {
   state.selectedRow = { rowIndex, datum, dag };
-
-  // Update chip styles
-  document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
-  document.querySelectorAll('.date-chip')[rowIndex] && 
-    document.querySelectorAll('.date-chip')[rowIndex].classList.add('selected');
 
   // Show bar + form
   const bar = document.getElementById('selectedDateBar');
@@ -852,23 +849,25 @@ function selectDate(rowIndex, datum, dag) {
 
   // Pre-fill existing data if any
   const row = state.sheetData[rowIndex] || [];
-  if (row[3])  document.getElementById('cardio').value = row[3];         // D
-  if (row[4])  document.getElementById('bijzonderheden').value = row[4]; // E
-  if (row[5])  document.getElementById('gewicht').value = row[5];        // F
-  if (row[7])  document.getElementById('khd').value = row[7];            // H
-  if (row[8])  document.getElementById('eiwitten').value = row[8];       // I
-  if (row[9])  document.getElementById('vetten').value = row[9];         // J
-  if (row[10]) document.getElementById('vezels').value = row[10];        // K
-  if (row[11]) document.getElementById('water').value = row[11];         // L
+  if (row[3])  document.getElementById('cardio').value = row[3];
+  if (row[4])  document.getElementById('bijzonderheden').value = row[4];
+  if (row[5])  document.getElementById('gewicht').value = row[5];
+  if (row[7])  document.getElementById('khd').value = row[7];
+  if (row[8])  document.getElementById('eiwitten').value = row[8];
+  if (row[9])  document.getElementById('vetten').value = row[9];
+  if (row[10]) document.getElementById('vezels').value = row[10];
+  if (row[11]) document.getElementById('water').value = row[11];
 
   window.scrollTo({ top: document.getElementById('formArea').offsetTop - 80, behavior: 'smooth' });
 }
+
 
 function clearDate() {
   state.selectedRow = null;
   document.getElementById('selectedDateBar').classList.remove('visible');
   document.getElementById('formArea').style.display = 'none';
-  document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
+  const picker = document.getElementById('datePicker');
+  if (picker) picker.value = '';
 }
 
 // ─── Toggle Ja/Nee ────────────────────────────────────────
