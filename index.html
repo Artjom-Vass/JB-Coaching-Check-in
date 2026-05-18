@@ -816,7 +816,8 @@ function initGoogleAuth() {
     loadDates();
     return;
   }
-  // Load Google Identity Services dynamically
+  // No cached token — show login button, load GIS script
+  showLoginBtn();
   if (!window.google) {
     const s = document.createElement('script');
     s.src = 'https://accounts.google.com/gsi/client';
@@ -832,32 +833,66 @@ function setupTokenClient() {
     client_id: state.config.clientId,
     scope: 'https://www.googleapis.com/auth/spreadsheets',
     callback: (resp) => {
-      if (resp.error) { setStatus('Auth mislukt', 'error'); return; }
+      if (resp.error) {
+        setStatus('Auth mislukt', 'error');
+        showLoginBtn();
+        return;
+      }
       saveToken(resp.access_token, resp.expires_in || 3600);
       setStatus('Verbonden', 'connected');
+      hideLoginBtn();
       document.getElementById('loadDatesBtn').style.display = 'flex';
       loadDates();
     }
   });
-  // Try silent (no popup) first
-  tokenClient.requestAccessToken({ prompt: '' });
+}
+
+function triggerLogin() {
+  if (!tokenClient) {
+    setStatus('Even geduld...', '');
+    setTimeout(triggerLogin, 500);
+    return;
+  }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function showLoginBtn() {
+  setStatus('Inloggen vereist', 'error');
+  let btn = document.getElementById('loginBtn');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'loginBtn';
+    btn.textContent = '🔑 Inloggen met Google';
+    btn.onclick = triggerLogin;
+    btn.style.cssText = `
+      width:100%; padding:14px; margin:16px 0;
+      background:var(--accent); border:none; border-radius:12px;
+      color:#0f1117; font-family:var(--font-display);
+      font-size:15px; font-weight:800; cursor:pointer;
+    `;
+    document.querySelector('main').prepend(btn);
+  }
+  btn.style.display = 'block';
+}
+
+function hideLoginBtn() {
+  const btn = document.getElementById('loginBtn');
+  if (btn) btn.style.display = 'none';
 }
 
 function ensureAuth(cb) {
   if (accessToken && tokenExpiry > Date.now()) { cb(); return; }
   clearToken();
-  if (!tokenClient) {
-    if (!window.google) {
-      const s = document.createElement('script');
-      s.src = 'https://accounts.google.com/gsi/client';
-      s.onload = () => { setupTokenClient(); };
-      document.head.appendChild(s);
-    } else {
-      setupTokenClient();
-    }
-    return;
+  showLoginBtn();
+  // Store callback to run after login
+  const orig = tokenClient?.callback;
+  if (tokenClient) {
+    tokenClient.callback = (resp) => {
+      if (orig) orig(resp);
+      if (!resp.error) cb();
+    };
+    tokenClient.requestAccessToken({ prompt: 'consent' });
   }
-  tokenClient.requestAccessToken({ prompt: '' });
 }
 
 
