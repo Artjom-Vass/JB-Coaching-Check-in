@@ -334,36 +334,33 @@ function save() {
   localStorage.setItem('jb_coach_participants', JSON.stringify(participants));
 }
 
-function getLink(sheetId) {
+function getLink(name, sheetId) {
   const base = settings.appUrl || 'https://jouw-app-url.github.io/JB-Coaching-Check-in';
-  return `${base}?id=${sheetId}`;
+  return `${base}?id=${sheetId}&name=${encodeURIComponent(name)}`;
 }
 
-function copyLink(sheetId, indicatorId) {
-  const link = getLink(sheetId);
+function copyLink(name, sheetId, indicatorId) {
+  const link = getLink(name, sheetId);
   navigator.clipboard.writeText(link).then(() => {
     const el = document.getElementById(indicatorId);
     el.classList.add('show');
     setTimeout(() => el.classList.remove('show'), 2000);
     showToast('✓ Link gekopieerd!');
   }).catch(() => {
-    // fallback
     const ta = document.createElement('textarea');
-    ta.value = link;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
+    ta.value = link; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
     document.body.removeChild(ta);
     showToast('✓ Link gekopieerd!');
   });
 }
 
-function openApp(sheetId) {
-  window.open(getLink(sheetId), '_blank');
+function openApp(name, sheetId) {
+  window.open(getLink(name, sheetId), '_blank');
 }
 
 function shareWhatsApp(name, sheetId) {
-  const link = getLink(sheetId);
+  const link = getLink(name, sheetId);
   const text = encodeURIComponent(
     `Hoi ${name}! 👋\n\nHier is jouw persoonlijke JB Coaching check-in link:\n\n${link}\n\nOpen deze link elke dag om je dagelijkse check-in in te vullen. 💪`
   );
@@ -371,13 +368,12 @@ function shareWhatsApp(name, sheetId) {
 }
 
 function shareNative(name, sheetId) {
-  const link = getLink(sheetId);
+  const link = getLink(name, sheetId);
   const text = `Hoi ${name}! 👋\n\nHier is jouw persoonlijke JB Coaching check-in link:\n\n${link}\n\nOpen deze link elke dag om je dagelijkse check-in in te vullen. 💪`;
 
   if (navigator.share) {
     navigator.share({ title: 'JB Coaching Check-in link', text });
   } else {
-    // Fallback: copy to clipboard
     navigator.clipboard.writeText(text).then(() => {
       showToast('✓ Bericht gekopieerd — plak het in WhatsApp!');
     }).catch(() => {
@@ -405,14 +401,14 @@ function renderParticipants() {
   }
 
   list.innerHTML = participants.map(p => {
-    const link        = getLink(p.sheetId);
+    const link        = getLink(p.name, p.sheetId);
     const indicatorId = `copied_${p.id}`;
     return `
       <div class="participant-card">
         <div class="card-header">
           <div class="card-name">👤 ${escHtml(p.name)}</div>
           <div class="card-actions">
-            <button class="btn btn-sm btn-outline" onclick="openApp('${escHtml(p.sheetId)}')">🔗 Openen</button>
+            <button class="btn btn-sm btn-outline" onclick="openApp('${escHtml(p.name)}','${escHtml(p.sheetId)}')">🔗 Openen</button>
             <button class="btn btn-sm btn-green" onclick="shareWhatsApp('${escHtml(p.name)}','${escHtml(p.sheetId)}')">💬 WhatsApp</button>
             <button class="btn btn-sm btn-outline" onclick="shareNative('${escHtml(p.name)}','${escHtml(p.sheetId)}')">📤 Delen</button>
             <button class="btn btn-sm btn-red" onclick="removeParticipant(${p.id})">✕</button>
@@ -422,10 +418,10 @@ function renderParticipants() {
         <div class="card-id">Sheet ID: ${escHtml(p.sheetId)}</div>
 
         <div class="link-row">
-          <div class="link-display" onclick="copyLink('${escHtml(p.sheetId)}','${indicatorId}')" title="Klik om te kopiëren">
+          <div class="link-display" onclick="copyLink('${escHtml(p.name)}','${escHtml(p.sheetId)}','${indicatorId}')" title="Klik om te kopiëren">
             ${escHtml(link)}
           </div>
-          <button class="btn btn-sm btn-outline" onclick="copyLink('${escHtml(p.sheetId)}','${indicatorId}')">📋</button>
+          <button class="btn btn-sm btn-outline" onclick="copyLink('${escHtml(p.name)}','${escHtml(p.sheetId)}','${indicatorId}')">📋</button>
           <span class="copy-indicator" id="${indicatorId}">✓ Gekopieerd!</span>
         </div>
       </div>`;
