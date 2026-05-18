@@ -594,7 +594,7 @@
         <label>Liter water</label>
         <div class="step-counter">
           <button onclick="stepField('water', -0.5)">−</button>
-          <input type="number" id="water" value="2.5" step="0.5" min="0" max="10" inputmode="decimal">
+          <input type="number" id="water" value="" step="0.5" min="0" max="10" inputmode="decimal">
           <button onclick="stepField('water', 0.5)">+</button>
         </div>
       </div>
@@ -635,6 +635,7 @@
         <div class="field">
           <label>Ontlasting</label>
           <select id="ontlasting">
+            <option value=""></option>
             <option>Normaal</option>
             <option>Zacht</option>
             <option>Dun</option>
@@ -645,6 +646,7 @@
         <div class="field">
           <label>Kracht</label>
           <select id="kracht">
+            <option value=""></option>
             <option>Normaal</option>
             <option>Hoog</option>
             <option>goed</option>
@@ -657,6 +659,7 @@
         <div class="field">
           <label>Energie</label>
           <select id="energie">
+            <option value=""></option>
             <option>goed</option>
             <option>Hoog</option>
             <option>matig</option>
@@ -666,6 +669,7 @@
         <div class="field">
           <label>Honger/trek</label>
           <select id="honger">
+            <option value=""></option>
             <option>Niet</option>
             <option>Een beejte</option>
             <option>Veel</option>
@@ -1000,24 +1004,24 @@ function onDatePickerChange() {
 
 // ─── Reset all form fields to defaults ───────────────────
 function resetForm() {
-  document.getElementById('cardio').value = '0';
+  document.getElementById('cardio').value = '';
   document.getElementById('bijzonderheden').value = '';
   document.getElementById('gewicht').value = '';
   document.getElementById('khd').value = '';
   document.getElementById('eiwitten').value = '';
   document.getElementById('vetten').value = '';
   document.getElementById('vezels').value = '';
-  document.getElementById('water').value = '2.5';
+  document.getElementById('water').value = '';
   document.getElementById('slaap').value = '';
   document.getElementById('stappen').value = '';
 
-  // Reset dropdowns to first option
+  // Reset dropdowns to empty
   ['ontlasting','kracht','energie','honger','verwachting'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
 
-  // Reset Ja/Nee toggles to neutral (no selection)
+  // Reset Ja/Nee toggles to neutral
   ['omega3','magn','creatine'].forEach(field => {
     state.jaNeeValues[field] = '';
     document.querySelectorAll(`[data-field="${field}"]`).forEach(b => b.className = 'toggle-btn');
