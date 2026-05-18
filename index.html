@@ -17,6 +17,16 @@
 <!-- PWA manifest -->
 <link rel="manifest" href="manifest.json">
 
+<!-- Allow Google APIs -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com;
+  font-src https://fonts.gstatic.com;
+  connect-src https://sheets.googleapis.com https://accounts.google.com;
+  frame-src https://accounts.google.com;
+">
+
 <title>JB Coaching · Check-in</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -467,29 +477,6 @@
   }
   .gear-btn:hover { color: var(--accent); }
 
-  .selected-date-bar {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    color: var(--accent);
-    background: rgba(245,200,66,0.08);
-    border: 1px solid rgba(245,200,66,0.2);
-    border-radius: 8px;
-    padding: 8px 14px;
-    margin-bottom: 16px;
-    display: none;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .selected-date-bar.visible { display: flex; }
-  .clear-date {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 1;
-  }
-
   .info-text {
     font-size: 12px;
     color: var(--muted);
@@ -545,12 +532,6 @@
     <button class="load-btn" id="loadDatesBtn" onclick="loadDates()" style="display:none">
       🔄 Datums vernieuwen
     </button>
-  </div>
-
-  <!-- Selected date indicator -->
-  <div class="selected-date-bar" id="selectedDateBar">
-    <span id="selectedDateLabel">—</span>
-    <button class="clear-date" onclick="clearDate()">✕</button>
   </div>
 
   <!-- Form (hidden until date selected) -->
@@ -809,22 +790,51 @@ function initGoogleAuth() {
     document.getElementById('configPanel').classList.add('visible');
     return;
   }
-  // Check cached token first
-  if (loadToken()) {
-    setStatus('Verbonden', 'connected');
-    document.getElementById('loadDatesBtn').style.display = 'flex';
-    loadDates();
-    return;
-  }
-  // No cached token — show login button, load GIS script
-  showLoginBtn();
+  // Always load GIS script first
   if (!window.google) {
     const s = document.createElement('script');
     s.src = 'https://accounts.google.com/gsi/client';
-    s.onload = setupTokenClient;
+    s.onload = () => {
+      setupTokenClient();
+      // After GIS loaded: check cached token
+      if (loadToken()) {
+        setStatus('Verbonden', 'connected');
+        document.getElementById('loadDatesBtn').style.display = 'flex';
+        loadDates();
+      } else {
+        showLoginBtn();
+      }
+    };
+    s.onerror = () => {
+      console.error('GIS script failed to load');
+      setStatus('Herlaad de pagina', 'error');
+      // Show manual retry button
+      let btn = document.getElementById('loginBtn');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'loginBtn';
+        btn.style.cssText = `
+          width:100%; padding:16px; margin:16px 0;
+          background:var(--accent); border:none; border-radius:12px;
+          color:#0f1117; font-family:var(--font-display);
+          font-size:16px; font-weight:800; cursor:pointer; display:block;
+        `;
+        document.querySelector('main').prepend(btn);
+      }
+      btn.textContent = '🔄 Opnieuw proberen';
+      btn.onclick = () => location.reload();
+      btn.style.display = 'block';
+    };
     document.head.appendChild(s);
   } else {
     setupTokenClient();
+    if (loadToken()) {
+      setStatus('Verbonden', 'connected');
+      document.getElementById('loadDatesBtn').style.display = 'flex';
+      loadDates();
+    } else {
+      showLoginBtn();
+    }
   }
 }
 
@@ -849,15 +859,16 @@ function setupTokenClient() {
 
 function triggerLogin() {
   if (!tokenClient) {
-    setStatus('Even geduld...', '');
-    setTimeout(triggerLogin, 500);
+    setStatus('Laden...', '');
+    setTimeout(triggerLogin, 300);
     return;
   }
-  tokenClient.requestAccessToken({ prompt: 'consent' });
+  // prompt:'select_account' forces the account picker popup to always show
+  tokenClient.requestAccessToken({ prompt: 'select_account' });
 }
 
 function showLoginBtn() {
-  setStatus('Inloggen vereist', 'error');
+  setStatus('Klik om in te loggen', 'error');
   let btn = document.getElementById('loginBtn');
   if (!btn) {
     btn = document.createElement('button');
@@ -865,10 +876,11 @@ function showLoginBtn() {
     btn.textContent = '🔑 Inloggen met Google';
     btn.onclick = triggerLogin;
     btn.style.cssText = `
-      width:100%; padding:14px; margin:16px 0;
+      width:100%; padding:16px; margin:16px 0;
       background:var(--accent); border:none; border-radius:12px;
       color:#0f1117; font-family:var(--font-display);
-      font-size:15px; font-weight:800; cursor:pointer;
+      font-size:16px; font-weight:800; cursor:pointer;
+      display:block;
     `;
     document.querySelector('main').prepend(btn);
   }
@@ -883,15 +895,16 @@ function hideLoginBtn() {
 function ensureAuth(cb) {
   if (accessToken && tokenExpiry > Date.now()) { cb(); return; }
   clearToken();
-  showLoginBtn();
-  // Store callback to run after login
-  const orig = tokenClient?.callback;
+  // Rewire callback to also run cb after successful login
   if (tokenClient) {
+    const prevCallback = tokenClient.callback;
     tokenClient.callback = (resp) => {
-      if (orig) orig(resp);
+      prevCallback(resp);
       if (!resp.error) cb();
     };
-    tokenClient.requestAccessToken({ prompt: 'consent' });
+    triggerLogin();
+  } else {
+    showLoginBtn();
   }
 }
 
@@ -1033,10 +1046,7 @@ function selectDate(rowIndex, datum, dag) {
   const picker = document.getElementById('datePicker');
   picker.value = rowIndex;
 
-  // Show bar + form
-  const bar = document.getElementById('selectedDateBar');
-  bar.classList.add('visible');
-  document.getElementById('selectedDateLabel').textContent = `📅 ${datum} (${dag})`;
+  // Show form
   const formArea = document.getElementById('formArea');
   formArea.style.display = 'block';
 
@@ -1117,14 +1127,10 @@ function selectDate(rowIndex, datum, dag) {
   setVal('slaap',          row[19]);
   setVal('stappen',        row[20]);
   setSelect('verwachting', row[21]);
-
-  window.scrollTo({ top: document.getElementById('formArea').offsetTop - 80, behavior: 'smooth' });
 }
-
 
 function clearDate() {
   state.selectedRow = null;
-  document.getElementById('selectedDateBar').classList.remove('visible');
   document.getElementById('formArea').style.display = 'none';
   const picker = document.getElementById('datePicker');
   if (picker) picker.value = '';
