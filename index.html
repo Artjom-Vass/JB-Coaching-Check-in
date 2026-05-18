@@ -619,11 +619,6 @@ function init() {
   const name = params.get('name') || '';
   if (name) {
     document.title = 'JB Coaching · ' + decodeURIComponent(name);
-    // Show participant name in user dropdown header
-    const nameEl = document.createElement('div');
-    nameEl.style.cssText = 'font-size:11px;color:var(--gold);padding:0 6px 6px;font-weight:600;';
-    nameEl.textContent = '👤 ' + decodeURIComponent(name);
-    document.getElementById('userDropdown').prepend(nameEl);
   }
 
   if (!state.sheetId) {
@@ -644,22 +639,6 @@ function init() {
   } else {
     loadGIS(HARDCODED_CLIENT_ID);
   }
-}
-
-// ═══════════════════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════════════════
-function toggleConfig() {
-  document.getElementById('configPanel').classList.toggle('visible');
-}
-
-function saveConfig() {
-  const clientId = document.getElementById('cfg_clientId').value.trim();
-  if (!clientId) { showToast('Vul een Client ID in', 'error'); return; }
-  localStorage.setItem(CLIENT_ID_KEY, clientId);
-  document.getElementById('configPanel').classList.remove('visible');
-  if (!state.sheetId) { return; }
-  loadGIS(clientId);
 }
 
 // ═══════════════════════════════════════════════
