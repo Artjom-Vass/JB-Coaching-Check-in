@@ -336,22 +336,10 @@ textarea { resize: vertical; min-height: 68px; font-size: 14px; }
       <div class="dot"></div>
       <span id="statusText">Niet verbonden</span>
     </div>
-    <button class="icon-btn" onclick="toggleConfig()" title="Instellingen">⚙</button>
   </div>
 </header>
 
 <main>
-
-  <!-- Config panel (coach only, hidden after setup) -->
-  <div class="panel" id="configPanel">
-    <div class="panel-title">⚙ Coach instellingen</div>
-    <div class="config-field">
-      <label>Google OAuth Client ID</label>
-      <input type="text" id="cfg_clientId" placeholder="xxxx.apps.googleusercontent.com">
-      <p class="info-text">Eenmalig instellen door coach. Gebruikers hoeven dit niet in te vullen.</p>
-    </div>
-    <button class="save-btn" onclick="saveConfig()">💾 Opslaan & verbinden</button>
-  </div>
 
   <!-- Login button (shown when not authenticated) -->
   <button class="login-btn" id="loginBtn" onclick="triggerLogin()">
@@ -600,9 +588,9 @@ const state = {
   isSaved: false
 };
 
+const HARDCODED_CLIENT_ID = '790818364616-hlc4fop5k83ttoaqg19hf3f8j9o5c063.apps.googleusercontent.com';
 const PROGRESSIE_TAB = 'Progressie';
 const METINGEN_TAB   = 'Metingen';
-const CLIENT_ID_KEY  = 'jb_client_id';
 const TOKEN_KEY      = 'jb_token_v2';
 
 // ═══════════════════════════════════════════════
@@ -612,21 +600,9 @@ function init() {
   const params = new URLSearchParams(window.location.search);
   state.sheetId = params.get('id') || null;
 
-  const clientId = localStorage.getItem(CLIENT_ID_KEY) || '';
-  document.getElementById('cfg_clientId').value = clientId;
-
   if (!state.sheetId) {
     document.getElementById('welcomeScreen').style.display = 'block';
-    if (!clientId) {
-      document.getElementById('configPanel').classList.add('visible');
-    }
     setStatus('Geen deelnemer', '');
-    return;
-  }
-
-  if (!clientId) {
-    document.getElementById('configPanel').classList.add('visible');
-    setStatus('Client ID nodig', 'error');
     return;
   }
 
@@ -636,7 +612,7 @@ function init() {
     showDateSection();
     loadDates();
   } else {
-    loadGIS(clientId);
+    loadGIS(HARDCODED_CLIENT_ID);
   }
 }
 
@@ -736,7 +712,7 @@ function ensureAuth(cb) {
     tokenClient.callback = (r) => { prev(r); if (!r.error) cb(); };
     triggerLogin();
   } else {
-    showLoginBtn();
+    loadGIS(HARDCODED_CLIENT_ID);
   }
 }
 
