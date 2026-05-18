@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>JB Coaching · Check-in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2335;
+    --border: #2a3050;
+    --accent: #f5c842;
+    --accent2: #3ee6a0;
+    --accent3: #e05c5c;
+    --text: #e8eaf2;
+    --muted: #6b7494;
+    --label: #9ba3c2;
+    --radius: 12px;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text); }
+
+  .status-pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-pill .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+  }
+  .status-pill.connected .dot { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+  .status-pill.connected { color: var(--accent2); border-color: rgba(62,230,160,0.3); }
+  .status-pill.error .dot { background: var(--accent3); }
+  .status-pill.error { color: var(--accent3); border-color: rgba(224,92,92,0.3); }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+  }
+
+  /* ── Config Panel ── */
+  .config-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 24px;
+    display: none;
+  }
+  .config-panel.visible { display: block; }
+  .config-panel h2 {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── Date Selector ── */
+  .date-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .date-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .date-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .date-chip:hover { border-color: var(--accent); }
+  .date-chip.selected {
+    border-color: var(--accent);
+    background: rgba(245,200,66,0.08);
+  }
+  .date-chip .chip-date {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .date-chip .chip-day {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .date-chip.filled .chip-date { color: var(--muted); }
+  .date-chip.filled { opacity: 0.5; cursor: not-allowed; }
+  .date-chip .chip-badge {
+    font-size: 10px;
+    color: var(--accent2);
+    font-family: var(--font-mono);
+  }
+
+  .load-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .load-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Form Sections ── */
+  .form-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--label);
+    margin-bottom: 6px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+
+  input[type="number"],
+  input[type="text"],
+  textarea,
+  select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+  input::placeholder { color: var(--muted); }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7494' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  textarea { resize: vertical; min-height: 70px; font-size: 14px; }
+
+  /* Two-col grid */
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .field-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Toggle (Ja/Nee) */
+  .toggle-group {
+    display: flex;
+    gap: 8px;
+  }
+  .toggle-btn {
+    flex: 1;
+    padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .toggle-btn.active-ja {
+    background: rgba(62,230,160,0.12);
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+  .toggle-btn.active-nee {
+    background: rgba(224,92,92,0.12);
+    border-color: var(--accent3);
+    color: var(--accent3);
+  }
+
+  /* Step counter */
+  .step-counter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .step-counter button {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: border-color 0.15s;
+  }
+  .step-counter button:hover { border-color: var(--accent); }
+  .step-counter input { text-align: center; }
+
+  /* ── Submit ── */
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #0f1117;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+  }
+  .submit-btn:hover { background: #f7d459; transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 14px;
+    color: var(--text);
+    z-index: 200;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(62,230,160,0.4); color: var(--accent2); }
+  .toast.error { border-color: rgba(224,92,92,0.4); color: var(--accent3); }
+
+  /* ── Loader spinner ── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Weight big display ── */
+  .weight-display {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .weight-display input {
+    font-size: 28px;
+    font-family: var(--font-mono);
+    color: var(--accent);
+    text-align: center;
+    padding: 8px;
+    border-color: transparent;
+    background: transparent;
+    width: 120px;
+  }
+  .weight-display input:focus { border-color: var(--accent); background: var(--surface2); border-radius: 8px; }
+  .weight-unit {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    color: var(--muted);
+  }
+
+  /* Empty / loading state */
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .empty-state .icon { font-size: 32px; margin-bottom: 10px; }
+
+  /* Config input */
+  .config-field { margin-bottom: 12px; }
+  .config-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  .save-config-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #0f1117;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+
+  .gear-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .gear-btn:hover { color: var(--accent); }
+
+  .selected-date-bar {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent);
+    background: rgba(245,200,66,0.08);
+    border: 1px solid rgba(245,200,66,0.2);
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-bottom: 16px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .selected-date-bar.visible { display: flex; }
+  .clear-date {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .info-text {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">JB<span>·Coaching</span></div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <div class="status-pill" id="statusPill">
+      <div class="dot"></div>
+      <span id="statusText">Niet verbonden</span>
+    </div>
+    <button class="gear-btn" onclick="toggleConfig()" title="Instellingen">⚙</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- Config panel -->
+  <div class="config-panel" id="configPanel">
+    <h2>⚙ Instellingen</h2>
+    <div class="config-field">
+      <label>Google Spreadsheet ID</label>
+      <input type="text" id="sheetId" placeholder="1BxiMV...YRm8n" />
+      <p class="info-text">Uit de URL: docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit</p>
+    </div>
+    <div class="config-field">
+      <label>Tabblad naam (bijv. Progressie)</label>
+      <input type="text" id="sheetName" placeholder="Progressie" />
+    </div>
+    <div class="config-field">
+      <label>Google OAuth Client ID</label>
+      <input type="text" id="clientId" placeholder="xxxx.apps.googleusercontent.com" />
+      <p class="info-text">Aanmaken via <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent);">Google Cloud Console</a> → APIs & Services → Credentials</p>
+    </div>
+    <button class="save-config-btn" onclick="saveConfig()">💾 Opslaan & Verbinden</button>
+  </div>
+
+  <!-- Date picker -->
+  <div class="date-section">
+    <div class="section-label">Selecteer datum</div>
+    <div id="dateGrid" class="date-grid">
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="icon">📅</div>
+        <div>Verbind eerst met Google Sheets<br>om datums te laden</div>
+      </div>
+    </div>
+    <button class="load-btn" id="loadDatesBtn" onclick="loadDates()" style="display:none">
+      🔄 Datums vernieuwen
+    </button>
+  </div>
+
+  <!-- Selected date indicator -->
+  <div class="selected-date-bar" id="selectedDateBar">
+    <span id="selectedDateLabel">—</span>
+    <button class="clear-date" onclick="clearDate()">✕</button>
+  </div>
+
+  <!-- Form (hidden until date selected) -->
+  <div id="formArea" style="display:none">
+
+    <!-- Gewicht -->
+    <div class="form-section">
+      <div class="section-label">Gewicht</div>
+      <div style="display:flex;align-items:center;justify-content:center;padding:8px 0;">
+        <div class="weight-display">
+          <input type="number" id="gewicht" step="0.1" min="40" max="200" placeholder="81.5" inputmode="decimal">
+          <span class="weight-unit">kg</span>
+        </div>
+      </div>
+      <p class="info-text" style="text-align:center;">Nuchter gewicht (ochtend)</p>
+    </div>
+
+    <!-- Cardio + Bijzonderheden -->
+    <div class="form-section">
+      <div class="section-label">Training & Notities</div>
+      <div class="field">
+        <label>Minuten cardio</label>
+        <div class="step-counter">
+          <button onclick="stepField('cardio', -5)">−</button>
+          <input type="number" id="cardio" value="0" min="0" max="300" inputmode="numeric">
+          <button onclick="stepField('cardio', 5)">+</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bijzonderheden</label>
+        <textarea id="bijzonderheden" placeholder="Notities voor vandaag..."></textarea>
+      </div>
+    </div>
+
+    <!-- Macros (KHD, Eiwitten, Vetten, Vezels, Water) -->
+    <div class="form-section">
+      <div class="section-label">Voeding</div>
+      <p class="info-text" style="margin-bottom:12px;">Kcal wordt berekend in het sheet · Doelen: 181g KHD · 147g Eiwit · 65g Vet · 30-40g Vezels</p>
+      <div class="field-row">
+        <div class="field">
+          <label>KHD (gram)</label>
+          <input type="number" id="khd" placeholder="181" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>Eiwitten (gram)</label>
+          <input type="number" id="eiwitten" placeholder="147" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Vetten (gram)</label>
+          <input type="number" id="vetten" placeholder="65" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>Vezels (gram)</label>
+          <input type="number" id="vezels" placeholder="35" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label>Liter water</label>
+        <div class="step-counter">
+          <button onclick="stepField('water', -0.5)">−</button>
+          <input type="number" id="water" value="2.5" step="0.5" min="0" max="10" inputmode="decimal">
+          <button onclick="stepField('water', 0.5)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supplementen -->
+    <div class="form-section">
+      <div class="section-label">Supplementen ingenomen?</div>
+      <div class="field-row-3">
+        <div class="field">
+          <label>Omega 3</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active-ja" onclick="toggleJaNee(this, 'omega3')" data-field="omega3" data-val="Ja">Ja</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this, 'omega3')" data-field="omega3" data-val="Nee">Nee</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Magnesium</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active-ja" onclick="toggleJaNee(this, 'magn')" data-field="magn" data-val="Ja">Ja</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this, 'magn')" data-field="magn" data-val="Nee">Nee</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Creatine</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active-ja" onclick="toggleJaNee(this, 'creatine')" data-field="creatine" data-val="Ja">Ja</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this, 'creatine')" data-field="creatine" data-val="Nee">Nee</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daggevoel -->
+    <div class="form-section">
+      <div class="section-label">Gevoel & prestatie</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Ontlasting</label>
+          <select id="ontlasting">
+            <option>Normaal</option>
+            <option>Geen</option>
+            <option>Diarree</option>
+            <option>Verstopping</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Kracht</label>
+          <select id="kracht">
+            <option>Normaal</option>
+            <option>Goed</option>
+            <option>Hoog</option>
+            <option>Laag</option>
+            <option>Slecht</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Energie</label>
+          <select id="energie">
+            <option>Goed</option>
+            <option>Normaal</option>
+            <option>Hoog</option>
+            <option>Laag</option>
+            <option>Slecht</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Honger/trek</label>
+          <select id="honger">
+            <option>Niet</option>
+            <option>Een beejte</option>
+            <option>Veel</option>
+            <option>Extreem</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Slaap (uren)</label>
+          <input type="text" id="slaap" placeholder="7:30" inputmode="text">
+        </div>
+        <div class="field">
+          <label>Aantal stappen</label>
+          <input type="number" id="stappen" placeholder="8000" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label>Verwachting</label>
+        <select id="verwachting">
+          <option value=""></option>
+          <option>0,0</option>
+          <option>Positief</option>
+          <option>Neutraal</option>
+          <option>Negatief</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitForm()">
+      ✓ Opslaan in Google Sheets
+    </button>
+
+  </div><!-- /formArea -->
+
+</main>
+
+<div class="toast" id="toast">
+  <span id="toastIcon"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────
+const state = {
+  jaNeeValues: { omega3: 'Ja', magn: 'Ja', creatine: 'Ja' },
+  selectedRow: null,   // { rowIndex, datum, dag }
+  sheetData: [],       // raw rows from the sheet
+  config: {}
+};
+
+// ─── Config ───────────────────────────────────────────────
+function loadConfig() {
+  const c = localStorage.getItem('jb_config');
+  if (c) {
+    state.config = JSON.parse(c);
+    document.getElementById('sheetId').value = state.config.sheetId || '';
+    document.getElementById('sheetName').value = state.config.sheetName || 'Progressie';
+    document.getElementById('clientId').value = state.config.clientId || '';
+  }
+}
+
+function saveConfig() {
+  state.config = {
+    sheetId: document.getElementById('sheetId').value.trim(),
+    sheetName: document.getElementById('sheetName').value.trim() || 'Progressie',
+    clientId: document.getElementById('clientId').value.trim()
+  };
+  localStorage.setItem('jb_config', JSON.stringify(state.config));
+  toggleConfig();
+  initGoogleAuth();
+}
+
+function toggleConfig() {
+  const p = document.getElementById('configPanel');
+  p.classList.toggle('visible');
+}
+
+// ─── Google Auth ───────────────────────────────────────────
+let tokenClient;
+let accessToken = null;
+
+function initGoogleAuth() {
+  if (!state.config.clientId) {
+    setStatus('Instellingen nodig', 'default');
+    document.getElementById('configPanel').classList.add('visible');
+    return;
+  }
+  // Load Google Identity Services dynamically
+  if (!window.google) {
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.onload = setupTokenClient;
+    document.head.appendChild(s);
+  } else {
+    setupTokenClient();
+  }
+}
+
+function setupTokenClient() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: state.config.clientId,
+    scope: 'https://www.googleapis.com/auth/spreadsheets',
+    callback: (resp) => {
+      if (resp.error) { setStatus('Auth mislukt', 'error'); return; }
+      accessToken = resp.access_token;
+      setStatus('Verbonden', 'connected');
+      document.getElementById('loadDatesBtn').style.display = 'flex';
+      loadDates();
+    }
+  });
+  // Try silent token first, else prompt
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
+function ensureAuth(cb) {
+  if (accessToken) { cb(); return; }
+  if (!tokenClient) { initGoogleAuth(); return; }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+// ─── Status ───────────────────────────────────────────────
+function setStatus(text, type) {
+  const pill = document.getElementById('statusPill');
+  const span = document.getElementById('statusText');
+  pill.className = 'status-pill ' + (type || '');
+  span.textContent = text;
+}
+
+// ─── Load dates from sheet ────────────────────────────────
+async function loadDates() {
+  if (!accessToken) { ensureAuth(() => loadDates()); return; }
+  setStatus('Laden...', '');
+
+  const range = encodeURIComponent(`${state.config.sheetName}!A3:X200`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${state.config.sheetId}/values/${range}`;
+
+  try {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    state.sheetData = data.values || [];
+    renderDateGrid();
+    setStatus('Verbonden', 'connected');
+    document.getElementById('loadDatesBtn').style.display = 'flex';
+  } catch(e) {
+    setStatus('Fout bij laden', 'error');
+    showToast('❌ ' + e.message, 'error');
+  }
+}
+
+// ─── Render date chips ────────────────────────────────────
+function renderDateGrid() {
+  const grid = document.getElementById('dateGrid');
+  grid.innerHTML = '';
+
+  // Find rows that have a date in col A but no weight in col F (empty = not yet filled)
+  // Col mapping (0-based): A=0 datum, B=1 dag, F=5 gewicht
+  const today = new Date().toLocaleDateString('nl-NL', {day:'2-digit',month:'2-digit',year:'2-digit'});
+  let count = 0;
+
+  state.sheetData.forEach((row, idx) => {
+    const datum = (row[0] || '').trim();
+    if (!datum) return;
+    const dag = (row[1] || '').trim();
+    const gewicht = (row[5] || '').trim(); // col F
+    const isFilled = gewicht !== '';
+
+    const chip = document.createElement('div');
+    chip.className = 'date-chip' + (isFilled ? ' filled' : '');
+    chip.innerHTML = `
+      <span class="chip-date">${datum}</span>
+      <span class="chip-day">${dag}</span>
+      ${isFilled ? '<span class="chip-badge">✓ ingevuld</span>' : ''}
+    `;
+    if (!isFilled) {
+      chip.onclick = () => selectDate(idx, datum, dag);
+    }
+    grid.appendChild(chip);
+    count++;
+    if (count >= 14) return; // show max 14 rows
+  });
+
+  if (count === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔍</div><div>Geen datums gevonden in het sheet</div></div>';
+  }
+}
+
+// ─── Select a date ────────────────────────────────────────
+function selectDate(rowIndex, datum, dag) {
+  state.selectedRow = { rowIndex, datum, dag };
+
+  // Update chip styles
+  document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.date-chip')[rowIndex] && 
+    document.querySelectorAll('.date-chip')[rowIndex].classList.add('selected');
+
+  // Show bar + form
+  const bar = document.getElementById('selectedDateBar');
+  bar.classList.add('visible');
+  document.getElementById('selectedDateLabel').textContent = `📅 ${datum} (${dag})`;
+  document.getElementById('formArea').style.display = 'block';
+
+  // Pre-fill existing data if any
+  const row = state.sheetData[rowIndex] || [];
+  if (row[3]) document.getElementById('cardio').value = row[3];         // D
+  if (row[4]) document.getElementById('bijzonderheden').value = row[4]; // E
+  if (row[5]) document.getElementById('gewicht').value = row[5];        // F
+  if (row[7]) document.getElementById('khd').value = row[7];            // H
+  if (row[8]) document.getElementById('eiwitten').value = row[8];       // I
+  if (row[9]) document.getElementById('vetten').value = row[9];         // J
+  if (row[10]) document.getElementById('vezels').value = row[10];       // K
+  if (row[11]) document.getElementById('water').value = row[11];        // L
+
+  window.scrollTo({ top: document.getElementById('formArea').offsetTop - 80, behavior: 'smooth' });
+}
+
+function clearDate() {
+  state.selectedRow = null;
+  document.getElementById('selectedDateBar').classList.remove('visible');
+  document.getElementById('formArea').style.display = 'none';
+  document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
+}
+
+// ─── Toggle Ja/Nee ────────────────────────────────────────
+function toggleJaNee(btn, field) {
+  const group = btn.closest('.toggle-group');
+  group.querySelectorAll('.toggle-btn').forEach(b => b.className = 'toggle-btn');
+  const val = btn.dataset.val;
+  state.jaNeeValues[field] = val;
+  btn.classList.add(val === 'Ja' ? 'active-ja' : 'active-nee');
+}
+
+// ─── Step counter ─────────────────────────────────────────
+function stepField(id, delta) {
+  const el = document.getElementById(id);
+  const val = parseFloat(el.value) || 0;
+  el.value = Math.max(0, +(val + delta).toFixed(1));
+}
+
+// ─── Submit ───────────────────────────────────────────────
+async function submitForm() {
+  if (!state.selectedRow) { showToast('Selecteer eerst een datum', 'error'); return; }
+  if (!accessToken) { ensureAuth(() => submitForm()); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Opslaan...';
+
+  // Build the values array matching columns D through S (skipping A,B,C which are date/day/preset)
+  // Sheet columns (1-based): A=Datum B=Dag C=Cardio D=Bijzonderheden ... let's map carefully
+  // From screenshot: C=Cardio, D=Bijzonderheden(notes), E=... wait re-examining:
+  // A=Datum, B=Dag, C=Aantal min cardio, D=Bijzonderheden(notes), E=..., F=Gewicht
+  // G=Kcal(calculated), H=KHD, I=Eiwitten, J=Vetten, K=Vezels, L=Water
+  // M=Omega3, N=Magn, O=Creatine, P=Ontlasting, Q=Kracht, R=Energie
+  // S=Honger, T=Slaap, U=Stappen, V=Verwachting
+
+  const rowIndex = state.selectedRow.rowIndex + 3; // +3 because sheet data starts at row 3
+
+  // We update individual ranges to avoid overwriting date/day cells
+  const updates = [
+    { range: `${state.config.sheetName}!C${rowIndex}`, values: [[v('cardio')]] },
+    { range: `${state.config.sheetName}!D${rowIndex}`, values: [[v('bijzonderheden')]] },
+    { range: `${state.config.sheetName}!F${rowIndex}`, values: [[v('gewicht')]] },
+    { range: `${state.config.sheetName}!H${rowIndex}`, values: [[v('khd')]] },
+    { range: `${state.config.sheetName}!I${rowIndex}`, values: [[v('eiwitten')]] },
+    { range: `${state.config.sheetName}!J${rowIndex}`, values: [[v('vetten')]] },
+    { range: `${state.config.sheetName}!K${rowIndex}`, values: [[v('vezels')]] },
+    { range: `${state.config.sheetName}!L${rowIndex}`, values: [[v('water')]] },
+    { range: `${state.config.sheetName}!M${rowIndex}`, values: [[state.jaNeeValues.omega3]] },
+    { range: `${state.config.sheetName}!N${rowIndex}`, values: [[state.jaNeeValues.magn]] },
+    { range: `${state.config.sheetName}!O${rowIndex}`, values: [[state.jaNeeValues.creatine]] },
+    { range: `${state.config.sheetName}!P${rowIndex}`, values: [[sv('ontlasting')]] },
+    { range: `${state.config.sheetName}!Q${rowIndex}`, values: [[sv('kracht')]] },
+    { range: `${state.config.sheetName}!R${rowIndex}`, values: [[sv('energie')]] },
+    { range: `${state.config.sheetName}!S${rowIndex}`, values: [[sv('honger')]] },
+    { range: `${state.config.sheetName}!T${rowIndex}`, values: [[v('slaap')]] },
+    { range: `${state.config.sheetName}!U${rowIndex}`, values: [[v('stappen')]] },
+    { range: `${state.config.sheetName}!V${rowIndex}`, values: [[sv('verwachting')]] },
+  ];
+
+  const body = { valueInputOption: 'USER_ENTERED', data: updates };
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${state.config.sheetId}/values:batchUpdate`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    showToast('✅ Opgeslagen!', 'success');
+    clearDate();
+    await loadDates();
+  } catch(e) {
+    showToast('❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✓ Opslaan in Google Sheets';
+  }
+}
+
+function v(id) {
+  return document.getElementById(id)?.value ?? '';
+}
+function sv(id) {
+  const el = document.getElementById(id);
+  return el ? el.options[el.selectedIndex]?.text || '' : '';
+}
+
+// ─── Toast ────────────────────────────────────────────────
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.className = 'toast ' + (type || '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── Init ─────────────────────────────────────────────────
+loadConfig();
+if (state.config.clientId) {
+  initGoogleAuth();
+} else {
+  document.getElementById('configPanel').classList.add('visible');
+  setStatus('Stel in om te starten', 'default');
+}
+</script>
+</body>
+</html>
