@@ -3,561 +3,409 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0f1117">
-
-<!-- PWA: iOS -->
+<meta name="theme-color" content="#0a0c12">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="JB Check-in">
-
-<!-- PWA: Android -->
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="JB Check-in">
-
-<!-- PWA manifest -->
 <link rel="manifest" href="manifest.json">
-
-<!-- Allow Google APIs -->
-<meta http-equiv="Content-Security-Policy" content="
-  default-src 'self';
-  script-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com;
-  font-src https://fonts.gstatic.com;
-  connect-src https://sheets.googleapis.com https://accounts.google.com;
-  frame-src https://accounts.google.com;
-">
-
 <title>JB Coaching · Check-in</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <style>
-  :root {
-    --bg: #0f1117;
-    --surface: #181c27;
-    --surface2: #1e2335;
-    --border: #2a3050;
-    --accent: #f5c842;
-    --accent2: #3ee6a0;
-    --accent3: #e05c5c;
-    --text: #e8eaf2;
-    --muted: #6b7494;
-    --label: #9ba3c2;
-    --radius: 12px;
-    --font-display: 'Syne', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
-    --font-mono: 'DM Mono', monospace;
-  }
+:root {
+  --bg:       #0a0c12;
+  --s1:       #11141f;
+  --s2:       #171b28;
+  --s3:       #1e2335;
+  --border:   #252b3d;
+  --gold:     #f0b429;
+  --gold2:    #ffd166;
+  --green:    #2dd4a0;
+  --red:      #e05c5c;
+  --blue:     #5b8dee;
+  --text:     #e8eaf2;
+  --muted:    #5c6480;
+  --label:    #8b93b5;
+  --r:        14px;
+  --font:     'Space Grotesk', sans-serif;
+  --mono:     'JetBrains Mono', monospace;
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    min-height: 100vh;
-    font-size: 15px;
-    line-height: 1.5;
-  }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
 
-  /* ── Header ── */
-  header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(15,17,23,0.92);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+/* ── Header ── */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,12,18,0.95);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo {
+  font-family: var(--font);
+  font-size: 16px; font-weight: 700;
+  letter-spacing: -0.5px;
+  display: flex; align-items: center; gap: 8px;
+}
+.logo-mark {
+  background: var(--gold);
+  color: #0a0c12;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+.logo-text { color: var(--text); }
 
-  .logo {
-    font-family: var(--font-display);
-    font-size: 17px;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-    color: var(--accent);
-  }
-  .logo span { color: var(--text); }
+.header-right { display: flex; align-items: center; gap: 8px; }
 
-  .status-pill {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .status-pill .dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--muted);
-    transition: background 0.3s;
-  }
-  .status-pill.connected .dot { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
-  .status-pill.connected { color: var(--accent2); border-color: rgba(62,230,160,0.3); }
-  .status-pill.error .dot { background: var(--accent3); }
-  .status-pill.error { color: var(--accent3); border-color: rgba(224,92,92,0.3); }
+.status-pill {
+  font-family: var(--mono);
+  font-size: 10px; padding: 4px 10px;
+  border-radius: 20px; border: 1px solid var(--border);
+  color: var(--muted);
+  display: flex; align-items: center; gap: 5px;
+  transition: all 0.3s;
+}
+.status-pill .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--muted); transition: all 0.3s;
+}
+.status-pill.connected { color: var(--green); border-color: rgba(45,212,160,0.3); }
+.status-pill.connected .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.status-pill.error { color: var(--red); border-color: rgba(224,92,92,0.3); }
+.status-pill.error .dot { background: var(--red); }
 
-  /* ── Main layout ── */
-  main {
-    max-width: 520px;
-    margin: 0 auto;
-    padding: 24px 16px 80px;
-  }
+.icon-btn {
+  width: 34px; height: 34px;
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--muted);
+  font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.icon-btn:hover { border-color: var(--gold); color: var(--gold); }
 
-  /* ── Config Panel ── */
-  .config-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 24px;
-    display: none;
-  }
-  .config-panel.visible { display: block; }
-  .config-panel h2 {
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--accent);
-    margin-bottom: 14px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
+/* ── Main ── */
+main { max-width: 520px; margin: 0 auto; padding: 16px 14px 100px; }
 
-  /* ── Date Selector ── */
-  .date-section {
-    background: rgba(24,28,39,0.97);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    margin-bottom: 20px;
-    position: sticky;
-    top: 57px;
-    z-index: 90;
-    backdrop-filter: blur(12px);
-  }
-  .section-label {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .section-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
+/* ── Welcome / No ID screen ── */
+.welcome-screen {
+  text-align: center; padding: 60px 20px;
+}
+.welcome-screen .big-icon { font-size: 56px; margin-bottom: 20px; }
+.welcome-screen h2 {
+  font-size: 22px; font-weight: 700;
+  margin-bottom: 10px; color: var(--text);
+}
+.welcome-screen p { color: var(--muted); font-size: 14px; line-height: 1.6; }
 
-  .date-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .date-chip {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .date-chip:hover { border-color: var(--accent); }
-  .date-chip.selected {
-    border-color: var(--accent);
-    background: rgba(245,200,66,0.08);
-  }
-  .date-chip .chip-date {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    color: var(--accent);
-    font-weight: 500;
-  }
-  .date-chip .chip-day {
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .date-chip.filled .chip-date { color: var(--muted); }
-  .date-chip.filled { opacity: 0.5; cursor: not-allowed; }
-  .date-chip .chip-badge {
-    font-size: 10px;
-    color: var(--accent2);
-    font-family: var(--font-mono);
-  }
+/* ── Config / Setup ── */
+.panel {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px; margin-bottom: 14px;
+  display: none;
+}
+.panel.visible { display: block; }
+.panel-title {
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--gold); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
 
-  .load-btn {
-    width: 100%;
-    margin-top: 12px;
-    padding: 12px;
-    background: var(--surface2);
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    color: var(--muted);
-    font-family: var(--font-body);
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-  .load-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* ── Date section (sticky) ── */
+.date-section {
+  background: rgba(17,20,31,0.97);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 14px; margin-bottom: 14px;
+  position: sticky; top: 57px; z-index: 90;
+  backdrop-filter: blur(16px);
+}
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--muted);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-  /* ── Form Sections ── */
-  .form-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 16px;
-  }
+.date-nav { display: flex; align-items: center; gap: 8px; }
+.date-nav select { flex: 1; }
 
-  .field { margin-bottom: 14px; }
-  .field:last-child { margin-bottom: 0; }
+.nav-arrow {
+  width: 36px; height: 36px; flex-shrink: 0;
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text);
+  font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; line-height: 1;
+}
+.nav-arrow:hover { border-color: var(--gold); color: var(--gold); }
 
-  label {
-    display: block;
-    font-size: 12px;
-    color: var(--label);
-    margin-bottom: 6px;
-    font-weight: 500;
-    letter-spacing: 0.2px;
-  }
+.load-btn {
+  width: 100%; margin-top: 10px; padding: 10px;
+  background: transparent; border: 1px dashed var(--border);
+  border-radius: 8px; color: var(--muted);
+  font-family: var(--font); font-size: 13px;
+  cursor: pointer; transition: all 0.15s;
+  display: none; align-items: center; justify-content: center; gap: 8px;
+}
+.load-btn:hover { border-color: var(--gold); color: var(--gold); }
+.load-btn.show { display: flex; }
 
-  input[type="number"],
-  input[type="text"],
-  textarea,
-  select {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 15px;
-    outline: none;
-    transition: border-color 0.15s;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  input:focus, select:focus, textarea:focus {
-    border-color: var(--accent);
-  }
-  input::placeholder { color: var(--muted); }
+/* ── Form sections ── */
+.form-section {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px; margin-bottom: 12px;
+}
 
-  select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7494' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 36px;
-    cursor: pointer;
-  }
+.field { margin-bottom: 13px; }
+.field:last-child { margin-bottom: 0; }
 
-  textarea { resize: vertical; min-height: 70px; font-size: 14px; }
+label {
+  display: block; font-size: 12px; color: var(--label);
+  margin-bottom: 6px; font-weight: 500;
+}
 
-  /* Two-col grid */
-  .field-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .field-row-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-  }
+input[type="text"], input[type="number"], textarea, select {
+  width: 100%; background: var(--s2);
+  border: 1px solid var(--border); border-radius: 9px;
+  padding: 10px 13px; color: var(--text);
+  font-family: var(--font); font-size: 15px;
+  outline: none; transition: border-color 0.15s;
+  -webkit-appearance: none; appearance: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+input::placeholder, textarea::placeholder { color: var(--muted); }
 
-  /* Toggle (Ja/Nee) */
-  .toggle-group {
-    display: flex;
-    gap: 8px;
-  }
-  .toggle-btn {
-    flex: 1;
-    padding: 9px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface2);
-    color: var(--muted);
-    font-family: var(--font-body);
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.15s;
-    text-align: center;
-  }
-  .toggle-btn.active-ja {
-    background: rgba(62,230,160,0.12);
-    border-color: var(--accent2);
-    color: var(--accent2);
-  }
-  .toggle-btn.active-nee {
-    background: rgba(224,92,92,0.12);
-    border-color: var(--accent3);
-    color: var(--accent3);
-  }
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235c6480' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 13px center;
+  padding-right: 34px; cursor: pointer;
+}
+select option { background: var(--s2); }
 
-  /* Step counter */
-  .step-counter {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .step-counter button {
-    width: 38px; height: 38px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--surface2);
-    color: var(--text);
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    flex-shrink: 0;
-    transition: border-color 0.15s;
-  }
-  .step-counter button:hover { border-color: var(--accent); }
-  .step-counter input { text-align: center; }
+textarea { resize: vertical; min-height: 68px; font-size: 14px; }
 
-  /* ── Submit ── */
-  .submit-btn {
-    width: 100%;
-    padding: 16px;
-    background: var(--accent);
-    border: none;
-    border-radius: var(--radius);
-    color: #0f1117;
-    font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.5px;
-    position: relative;
-    overflow: hidden;
-  }
-  .submit-btn:hover { background: #f7d459; transform: translateY(-1px); }
-  .submit-btn:active { transform: translateY(0); }
-  .submit-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 
-  /* ── Toast ── */
-  .toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 20px;
-    font-size: 14px;
-    color: var(--text);
-    z-index: 200;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.success { border-color: rgba(62,230,160,0.4); color: var(--accent2); }
-  .toast.error { border-color: rgba(224,92,92,0.4); color: var(--accent3); }
+/* ── Weight display ── */
+.weight-wrap {
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 0;
+}
+.weight-input-big {
+  font-size: 32px !important; font-family: var(--mono) !important;
+  color: var(--gold) !important; text-align: center;
+  width: 130px; border-color: transparent !important;
+  background: transparent !important; padding: 6px !important;
+}
+.weight-input-big:focus { border-color: var(--gold) !important; background: var(--s2) !important; border-radius: 9px !important; }
+.weight-unit { font-family: var(--mono); font-size: 18px; color: var(--muted); margin-left: 4px; }
 
-  /* ── Loader spinner ── */
-  .spinner {
-    width: 16px; height: 16px;
-    border: 2px solid rgba(255,255,255,0.2);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    display: inline-block;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* ── Step counter ── */
+.step-row { display: flex; align-items: center; gap: 8px; }
+.step-row input { text-align: center; }
+.step-btn {
+  width: 38px; height: 38px; flex-shrink: 0;
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text);
+  font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s; line-height: 1;
+}
+.step-btn:hover { border-color: var(--gold); }
 
-  /* ── Weight big display ── */
-  .weight-display {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-  }
-  .weight-display input {
-    font-size: 28px;
-    font-family: var(--font-mono);
-    color: var(--accent);
-    text-align: center;
-    padding: 8px;
-    border-color: transparent;
-    background: transparent;
-    width: 120px;
-  }
-  .weight-display input:focus { border-color: var(--accent); background: var(--surface2); border-radius: 8px; }
-  .weight-unit {
-    font-family: var(--font-mono);
-    font-size: 18px;
-    color: var(--muted);
-  }
+/* ── Toggle Ja/Nee ── */
+.toggle-group { display: flex; gap: 6px; }
+.toggle-btn {
+  flex: 1; padding: 9px 6px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--s2); color: var(--muted);
+  font-family: var(--font); font-size: 14px;
+  cursor: pointer; transition: all 0.15s; text-align: center;
+}
+.toggle-btn.active-ja { background: rgba(45,212,160,0.1); border-color: var(--green); color: var(--green); }
+.toggle-btn.active-nee { background: rgba(224,92,92,0.1); border-color: var(--red); color: var(--red); }
 
-  .date-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .date-nav select { flex: 1; }
-  .nav-arrow {
-    width: 38px; height: 38px;
-    flex-shrink: 0;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 22px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.15s, color 0.15s;
-    line-height: 1;
-  }
-  .nav-arrow:hover { border-color: var(--accent); color: var(--accent); }
-  .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+/* ── Submit ── */
+.submit-btn {
+  width: 100%; padding: 15px;
+  background: var(--gold); border: none; border-radius: var(--r);
+  color: #0a0c12; font-family: var(--font);
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+.submit-btn:hover { background: var(--gold2); transform: translateY(-1px); }
+.submit-btn:active { transform: translateY(0); }
+.submit-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+.submit-btn.saved { background: var(--green); color: #0a0c12; }
 
-  /* Empty / loading state */
-  .empty-state {
-    text-align: center;
-    padding: 30px 20px;
-    color: var(--muted);
-    font-size: 14px;
-  }
-  .empty-state .icon { font-size: 32px; margin-bottom: 10px; }
+/* ── Login button ── */
+.login-btn {
+  width: 100%; padding: 15px; margin: 14px 0;
+  background: var(--gold); border: none; border-radius: var(--r);
+  color: #0a0c12; font-family: var(--font);
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  display: none; align-items: center; justify-content: center; gap: 10px;
+  transition: all 0.2s;
+}
+.login-btn.show { display: flex; }
+.login-btn:hover { background: var(--gold2); }
 
-  /* Config input */
-  .config-field { margin-bottom: 12px; }
-  .config-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-  .save-config-btn {
-    width: 100%;
-    padding: 10px;
-    background: var(--accent);
-    border: none;
-    border-radius: 8px;
-    color: #0f1117;
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 4px;
-  }
+/* ── Config fields ── */
+.config-field { margin-bottom: 12px; }
+.config-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.save-btn {
+  width: 100%; padding: 11px;
+  background: var(--gold); border: none; border-radius: 9px;
+  color: #0a0c12; font-family: var(--font);
+  font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 4px;
+  transition: background 0.15s;
+}
+.save-btn:hover { background: var(--gold2); }
 
-  .gear-btn {
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-size: 18px;
-    cursor: pointer;
-    padding: 4px;
-    line-height: 1;
-    transition: color 0.15s;
-  }
-  .gear-btn:hover { color: var(--accent); }
+/* ── Info text ── */
+.info-text { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
 
-  .info-text {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 6px;
-    line-height: 1.4;
-  }
+/* ── Spinner ── */
+.spinner {
+  width: 15px; height: 15px;
+  border: 2px solid rgba(10,12,18,0.3); border-top-color: #0a0c12;
+  border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 20px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 18px;
+  font-size: 13px; color: var(--text); z-index: 300;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  white-space: nowrap; display: flex; align-items: center; gap: 8px;
+  max-width: 90vw;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: rgba(45,212,160,0.4); color: var(--green); }
+.toast.error { border-color: rgba(224,92,92,0.4); color: var(--red); }
+
+/* ── Empty state ── */
+.empty-state { text-align: center; padding: 16px; color: var(--muted); font-size: 13px; flex: 1; }
+
+/* ── Sunday badge ── */
+.sunday-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(240,180,41,0.12); border: 1px solid rgba(240,180,41,0.3);
+  color: var(--gold); font-size: 11px; font-weight: 600;
+  padding: 3px 9px; border-radius: 20px; margin-bottom: 12px;
+  letter-spacing: 0.3px;
+}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">JB<span>·Coaching</span></div>
-  <div style="display:flex;gap:10px;align-items:center;">
+  <div class="logo">
+    <span class="logo-mark">JB</span>
+    <span class="logo-text">Coaching</span>
+  </div>
+  <div class="header-right">
     <div class="status-pill" id="statusPill">
       <div class="dot"></div>
       <span id="statusText">Niet verbonden</span>
     </div>
-    <button class="gear-btn" onclick="toggleConfig()" title="Instellingen">⚙</button>
+    <button class="icon-btn" onclick="toggleConfig()" title="Instellingen">⚙</button>
   </div>
 </header>
 
 <main>
 
-  <!-- Config panel -->
-  <div class="config-panel" id="configPanel">
-    <h2>⚙ Instellingen</h2>
+  <!-- Config panel (coach only, hidden after setup) -->
+  <div class="panel" id="configPanel">
+    <div class="panel-title">⚙ Coach instellingen</div>
     <div class="config-field">
-      <label>Google Spreadsheet ID</label>
-      <input type="text" id="sheetId" placeholder="1BxiMV...YRm8n" />
-      <p class="info-text">Uit de URL: docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit</p>
+      <label>Google OAuth Client ID</label>
+      <input type="text" id="cfg_clientId" placeholder="xxxx.apps.googleusercontent.com">
+      <p class="info-text">Eenmalig instellen door coach. Gebruikers hoeven dit niet in te vullen.</p>
     </div>
-    <div class="config-field">
-      <label>Tabblad naam</label>
-      <input type="text" id="sheetName" placeholder="Progressie" />
-    </div>
-    <input type="hidden" id="clientId" value="790818364616-hlc4fop5k83ttoaqg19hf3f8j9o5c063.apps.googleusercontent.com">
-    <button class="save-config-btn" onclick="saveConfig()">💾 Opslaan & Verbinden</button>
+    <button class="save-btn" onclick="saveConfig()">💾 Opslaan & verbinden</button>
   </div>
 
-  <!-- Date picker -->
-  <div class="date-section">
-    <div class="section-label">Selecteer datum</div>
+  <!-- Login button (shown when not authenticated) -->
+  <button class="login-btn" id="loginBtn" onclick="triggerLogin()">
+    🔑 Inloggen met Google
+  </button>
+
+  <!-- Welcome screen (shown when no sheet ID in URL) -->
+  <div id="welcomeScreen" class="welcome-screen" style="display:none">
+    <div class="big-icon">🔗</div>
+    <h2>Geen deelnemer geselecteerd</h2>
+    <p>Open de link die je van je coach hebt ontvangen.<br><br>
+    Als je de coach bent, gebruik de link:<br>
+    <code style="background:var(--s2);padding:4px 8px;border-radius:6px;font-size:12px;margin-top:8px;display:inline-block;">
+      ?id=SPREADSHEET_ID
+    </code></p>
+  </div>
+
+  <!-- Date picker (sticky) -->
+  <div class="date-section" id="dateSection" style="display:none">
+    <div class="section-label">Datum</div>
     <div class="date-nav">
-      <button class="nav-arrow" onclick="stepDate(-1)" title="Vorige datum">‹</button>
-      <select id="datePicker" onchange="onDatePickerChange()" style="display:none">
+      <button class="nav-arrow" onclick="stepDate(-1)">‹</button>
+      <select id="datePicker" onchange="onDatePickerChange()">
         <option value="">— Kies een datum —</option>
       </select>
-      <div id="datePickerPlaceholder" class="empty-state" style="flex:1;padding:10px 0;">
-        <div>Verbind eerst met Google Sheets om datums te laden</div>
-      </div>
-      <button class="nav-arrow" onclick="stepDate(1)" title="Volgende datum">›</button>
+      <button class="nav-arrow" onclick="stepDate(1)">›</button>
     </div>
-    <button class="load-btn" id="loadDatesBtn" onclick="loadDates()" style="display:none">
-      🔄 Datums vernieuwen
+    <button class="load-btn" id="loadDatesBtn" onclick="loadDates()">
+      🔄 Vernieuwen
     </button>
   </div>
 
-  <!-- Form (hidden until date selected) -->
+  <!-- Form area -->
   <div id="formArea" style="display:none">
 
     <!-- Gewicht -->
     <div class="form-section">
       <div class="section-label">Gewicht</div>
-      <div style="display:flex;align-items:center;justify-content:center;padding:8px 0;">
-        <div class="weight-display">
-          <input type="text" id="gewicht" placeholder="81,5" inputmode="decimal" pattern="[0-9]*[,.]?[0-9]*">
-          <span class="weight-unit">kg</span>
-        </div>
+      <div class="weight-wrap">
+        <input type="text" id="gewicht" class="weight-input-big" placeholder="81,5" inputmode="decimal" pattern="[0-9]*[,.]?[0-9]*">
+        <span class="weight-unit">kg</span>
       </div>
-      <p class="info-text" style="text-align:center;">Nuchter gewicht (ochtend)</p>
+      <p class="info-text" style="text-align:center">Nuchter gewicht · ochtend</p>
     </div>
 
-    <!-- Cardio + Bijzonderheden -->
+    <!-- Training -->
     <div class="form-section">
-      <div class="section-label">Training & Notities</div>
+      <div class="section-label">Training & notities</div>
       <div class="field">
         <label>Minuten cardio</label>
-        <div class="step-counter">
-          <button onclick="stepField('cardio', -5)">−</button>
-          <input type="number" id="cardio" value="0" min="0" max="300" inputmode="numeric">
-          <button onclick="stepField('cardio', 5)">+</button>
+        <div class="step-row">
+          <button class="step-btn" onclick="stepField('cardio',-5)">−</button>
+          <input type="number" id="cardio" value="" min="0" max="300" inputmode="numeric">
+          <button class="step-btn" onclick="stepField('cardio',5)">+</button>
         </div>
       </div>
       <div class="field">
@@ -566,10 +414,10 @@
       </div>
     </div>
 
-    <!-- Macros (KHD, Eiwitten, Vetten, Vezels, Water) -->
+    <!-- Voeding -->
     <div class="form-section">
       <div class="section-label">Voeding</div>
-      <p class="info-text" style="margin-bottom:12px;">Kcal wordt berekend in het sheet · Doelen: 181g KHD · 147g Eiwit · 65g Vet · 30-40g Vezels</p>
+      <p class="info-text" style="margin-bottom:12px">Kcal wordt berekend in het sheet · Doelen: 181g KHD · 147g Eiwit · 65g Vet · 30-40g Vezels</p>
       <div class="field-row">
         <div class="field">
           <label>KHD (gram)</label>
@@ -592,10 +440,10 @@
       </div>
       <div class="field">
         <label>Liter water</label>
-        <div class="step-counter">
-          <button onclick="stepField('water', -0.5)">−</button>
+        <div class="step-row">
+          <button class="step-btn" onclick="stepField('water',-0.5)">−</button>
           <input type="number" id="water" value="" step="0.5" min="0" max="10" inputmode="decimal">
-          <button onclick="stepField('water', 0.5)">+</button>
+          <button class="step-btn" onclick="stepField('water',0.5)">+</button>
         </div>
       </div>
     </div>
@@ -607,28 +455,28 @@
         <div class="field">
           <label>Omega 3</label>
           <div class="toggle-group">
-            <button class="toggle-btn" onclick="toggleJaNee(this, 'omega3')" data-field="omega3" data-val="Ja">Ja</button>
-            <button class="toggle-btn" onclick="toggleJaNee(this, 'omega3')" data-field="omega3" data-val="Nee">Nee</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this,'omega3')" data-field="omega3" data-val="Ja">Ja</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this,'omega3')" data-field="omega3" data-val="Nee">Nee</button>
           </div>
         </div>
         <div class="field">
           <label>Magnesium</label>
           <div class="toggle-group">
-            <button class="toggle-btn" onclick="toggleJaNee(this, 'magn')" data-field="magn" data-val="Ja">Ja</button>
-            <button class="toggle-btn" onclick="toggleJaNee(this, 'magn')" data-field="magn" data-val="Nee">Nee</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this,'magn')" data-field="magn" data-val="Ja">Ja</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this,'magn')" data-field="magn" data-val="Nee">Nee</button>
           </div>
         </div>
         <div class="field">
           <label>Creatine</label>
           <div class="toggle-group">
-            <button class="toggle-btn" onclick="toggleJaNee(this, 'creatine')" data-field="creatine" data-val="Ja">Ja</button>
-            <button class="toggle-btn" onclick="toggleJaNee(this, 'creatine')" data-field="creatine" data-val="Nee">Nee</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this,'creatine')" data-field="creatine" data-val="Ja">Ja</button>
+            <button class="toggle-btn" onclick="toggleJaNee(this,'creatine')" data-field="creatine" data-val="Nee">Nee</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Daggevoel -->
+    <!-- Gevoel -->
     <div class="form-section">
       <div class="section-label">Gevoel & prestatie</div>
       <div class="field-row">
@@ -699,6 +547,37 @@
       </div>
     </div>
 
+    <!-- Metingen (alleen zondag) -->
+    <div class="form-section" id="metingenSection" style="display:none">
+      <div class="section-label">Wekelijkse metingen</div>
+      <div class="sunday-badge">📅 Zondag check-in</div>
+      <p class="info-text" style="margin-bottom:12px">Meet in centimeters met komma</p>
+      <div class="field-row">
+        <div class="field">
+          <label>Buikomvang navel</label>
+          <input type="text" id="meting_navel" placeholder="80,0" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label>Buikomvang heup</label>
+          <input type="text" id="meting_heup" placeholder="85,0" inputmode="decimal">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Arm links</label>
+          <input type="text" id="meting_arm" placeholder="39,0" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label>Been links</label>
+          <input type="text" id="meting_been" placeholder="57,0" inputmode="decimal">
+        </div>
+      </div>
+      <div class="field">
+        <label>Borstomvang</label>
+        <input type="text" id="meting_borst" placeholder="103,0" inputmode="decimal">
+      </div>
+    </div>
+
     <button class="submit-btn" id="submitBtn" onclick="submitForm()">
       ✓ Opslaan in Google Sheets
     </button>
@@ -707,213 +586,163 @@
 
 </main>
 
-<div class="toast" id="toast">
-  <span id="toastIcon"></span>
-  <span id="toastMsg"></span>
-</div>
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
 
 <script>
-// ─── State ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
 const state = {
-  jaNeeValues: { omega3: '', magn: '', creatine: '' },
-  selectedRow: null,
+  sheetId: null,
   sheetData: [],
-  config: {}
+  selectedRow: null,
+  jaNeeValues: { omega3: '', magn: '', creatine: '' },
+  isSaved: false
 };
 
-// ─── App Config (hardcoded — no setup needed for users) ───
-const APP_CONFIG = {
-  clientId: '790818364616-hlc4fop5k83ttoaqg19hf3f8j9o5c063.apps.googleusercontent.com',
-  sheetId: '',   // ← VUL HIER JOUW SPREADSHEET ID IN
-  sheetName: 'Progressie'
-};
+const PROGRESSIE_TAB = 'Progressie';
+const METINGEN_TAB   = 'Metingen';
+const CLIENT_ID_KEY  = 'jb_client_id';
+const TOKEN_KEY      = 'jb_token_v2';
 
-// ─── Config ───────────────────────────────────────────────
-function loadConfig() {
-  // Start from hardcoded defaults, allow localStorage overrides (for admin)
-  const saved = JSON.parse(localStorage.getItem('jb_config') || '{}');
-  state.config = {
-    clientId: APP_CONFIG.clientId,
-    sheetId:  saved.sheetId  || APP_CONFIG.sheetId,
-    sheetName: saved.sheetName || APP_CONFIG.sheetName
-  };
-  document.getElementById('sheetId').value = state.config.sheetId;
-  document.getElementById('sheetName').value = state.config.sheetName;
-  document.getElementById('clientId').value = state.config.clientId;
+// ═══════════════════════════════════════════════
+// INIT — read ?id= from URL
+// ═══════════════════════════════════════════════
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  state.sheetId = params.get('id') || null;
+
+  const clientId = localStorage.getItem(CLIENT_ID_KEY) || '';
+  document.getElementById('cfg_clientId').value = clientId;
+
+  if (!state.sheetId) {
+    document.getElementById('welcomeScreen').style.display = 'block';
+    if (!clientId) {
+      document.getElementById('configPanel').classList.add('visible');
+    }
+    setStatus('Geen deelnemer', '');
+    return;
+  }
+
+  if (!clientId) {
+    document.getElementById('configPanel').classList.add('visible');
+    setStatus('Client ID nodig', 'error');
+    return;
+  }
+
+  // Try cached token
+  if (loadToken()) {
+    setStatus('Verbonden', 'connected');
+    showDateSection();
+    loadDates();
+  } else {
+    loadGIS(clientId);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════
+function toggleConfig() {
+  document.getElementById('configPanel').classList.toggle('visible');
 }
 
 function saveConfig() {
-  state.config = {
-    clientId: APP_CONFIG.clientId,
-    sheetId: document.getElementById('sheetId').value.trim(),
-    sheetName: document.getElementById('sheetName').value.trim() || 'Progressie',
-  };
-  localStorage.setItem('jb_config', JSON.stringify(state.config));
-  toggleConfig();
-  initGoogleAuth();
+  const clientId = document.getElementById('cfg_clientId').value.trim();
+  if (!clientId) { showToast('Vul een Client ID in', 'error'); return; }
+  localStorage.setItem(CLIENT_ID_KEY, clientId);
+  document.getElementById('configPanel').classList.remove('visible');
+  if (!state.sheetId) { return; }
+  loadGIS(clientId);
 }
 
-function toggleConfig() {
-  const p = document.getElementById('configPanel');
-  p.classList.toggle('visible');
-}
-
-
-// ─── Google Auth ───────────────────────────────────────────
-let tokenClient;
+// ═══════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════
+let tokenClient = null;
 let accessToken = null;
-let tokenExpiry = 0;
+let tokenExpiry  = 0;
 
 function saveToken(token, expiresIn) {
-  accessToken = token;
-  tokenExpiry = Date.now() + (expiresIn - 60) * 1000; // expire 1 min early
-  localStorage.setItem('jb_token', JSON.stringify({ token, expiry: tokenExpiry }));
+  accessToken  = token;
+  tokenExpiry  = Date.now() + (expiresIn - 60) * 1000;
+  localStorage.setItem(TOKEN_KEY, JSON.stringify({ token, expiry: tokenExpiry }));
 }
 
 function loadToken() {
   try {
-    const t = JSON.parse(localStorage.getItem('jb_token') || 'null');
+    const t = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null');
     if (t && t.expiry > Date.now()) {
-      accessToken = t.token;
-      tokenExpiry = t.expiry;
-      return true;
+      accessToken = t.token; tokenExpiry = t.expiry; return true;
     }
   } catch(e) {}
   return false;
 }
 
 function clearToken() {
-  accessToken = null;
-  tokenExpiry = 0;
-  localStorage.removeItem('jb_token');
+  accessToken = null; tokenExpiry = 0;
+  localStorage.removeItem(TOKEN_KEY);
 }
 
-function initGoogleAuth() {
-  if (!state.config.clientId) {
-    setStatus('Instellingen nodig', 'default');
-    document.getElementById('configPanel').classList.add('visible');
-    return;
-  }
-  // Always load GIS script first
-  if (!window.google) {
-    const s = document.createElement('script');
-    s.src = 'https://accounts.google.com/gsi/client';
-    s.onload = () => {
-      setupTokenClient();
-      // After GIS loaded: check cached token
-      if (loadToken()) {
-        setStatus('Verbonden', 'connected');
-        document.getElementById('loadDatesBtn').style.display = 'flex';
-        loadDates();
-      } else {
-        showLoginBtn();
-      }
-    };
-    s.onerror = () => {
-      console.error('GIS script failed to load');
-      setStatus('Herlaad de pagina', 'error');
-      // Show manual retry button
-      let btn = document.getElementById('loginBtn');
-      if (!btn) {
-        btn = document.createElement('button');
-        btn.id = 'loginBtn';
-        btn.style.cssText = `
-          width:100%; padding:16px; margin:16px 0;
-          background:var(--accent); border:none; border-radius:12px;
-          color:#0f1117; font-family:var(--font-display);
-          font-size:16px; font-weight:800; cursor:pointer; display:block;
-        `;
-        document.querySelector('main').prepend(btn);
-      }
-      btn.textContent = '🔄 Opnieuw proberen';
-      btn.onclick = () => location.reload();
-      btn.style.display = 'block';
-    };
-    document.head.appendChild(s);
-  } else {
-    setupTokenClient();
-    if (loadToken()) {
-      setStatus('Verbonden', 'connected');
-      document.getElementById('loadDatesBtn').style.display = 'flex';
-      loadDates();
-    } else {
-      showLoginBtn();
-    }
-  }
+function loadGIS(clientId) {
+  setStatus('Laden...', '');
+  if (window.google?.accounts?.oauth2) { setupTokenClient(clientId); return; }
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = () => setupTokenClient(clientId);
+  s.onerror = () => {
+    setStatus('Script fout', 'error');
+    showToast('❌ Google script kon niet laden. Herlaad de pagina.', 'error');
+    showLoginBtn();
+  };
+  document.head.appendChild(s);
 }
 
-function setupTokenClient() {
+function setupTokenClient(clientId) {
   tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: state.config.clientId,
+    client_id: clientId,
     scope: 'https://www.googleapis.com/auth/spreadsheets',
     callback: (resp) => {
-      if (resp.error) {
-        setStatus('Auth mislukt', 'error');
-        showLoginBtn();
-        return;
-      }
+      if (resp.error) { setStatus('Auth mislukt', 'error'); showLoginBtn(); return; }
       saveToken(resp.access_token, resp.expires_in || 3600);
-      setStatus('Verbonden', 'connected');
       hideLoginBtn();
-      document.getElementById('loadDatesBtn').style.display = 'flex';
+      setStatus('Verbonden', 'connected');
+      showDateSection();
       loadDates();
     }
   });
+  showLoginBtn();
 }
 
 function triggerLogin() {
-  if (!tokenClient) {
-    setStatus('Laden...', '');
-    setTimeout(triggerLogin, 300);
-    return;
-  }
-  // prompt:'select_account' forces the account picker popup to always show
+  if (!tokenClient) { showToast('Even geduld...', ''); setTimeout(triggerLogin, 400); return; }
   tokenClient.requestAccessToken({ prompt: 'select_account' });
 }
 
 function showLoginBtn() {
+  const b = document.getElementById('loginBtn');
+  b.classList.add('show');
   setStatus('Klik om in te loggen', 'error');
-  let btn = document.getElementById('loginBtn');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.id = 'loginBtn';
-    btn.textContent = '🔑 Inloggen met Google';
-    btn.onclick = triggerLogin;
-    btn.style.cssText = `
-      width:100%; padding:16px; margin:16px 0;
-      background:var(--accent); border:none; border-radius:12px;
-      color:#0f1117; font-family:var(--font-display);
-      font-size:16px; font-weight:800; cursor:pointer;
-      display:block;
-    `;
-    document.querySelector('main').prepend(btn);
-  }
-  btn.style.display = 'block';
 }
-
 function hideLoginBtn() {
-  const btn = document.getElementById('loginBtn');
-  if (btn) btn.style.display = 'none';
+  document.getElementById('loginBtn').classList.remove('show');
 }
 
 function ensureAuth(cb) {
   if (accessToken && tokenExpiry > Date.now()) { cb(); return; }
   clearToken();
-  // Rewire callback to also run cb after successful login
   if (tokenClient) {
-    const prevCallback = tokenClient.callback;
-    tokenClient.callback = (resp) => {
-      prevCallback(resp);
-      if (!resp.error) cb();
-    };
+    const prev = tokenClient.callback;
+    tokenClient.callback = (r) => { prev(r); if (!r.error) cb(); };
     triggerLogin();
   } else {
     showLoginBtn();
   }
 }
 
-
-// ─── Status ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════
 function setStatus(text, type) {
   const pill = document.getElementById('statusPill');
   const span = document.getElementById('statusText');
@@ -921,201 +750,154 @@ function setStatus(text, type) {
   span.textContent = text;
 }
 
-// ─── Load dates from sheet ────────────────────────────────
+function showDateSection() {
+  document.getElementById('dateSection').style.display = 'block';
+  document.getElementById('welcomeScreen').style.display = 'none';
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.className = 'toast ' + (type || '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), type === 'error' ? 6000 : 3000);
+}
+
+// ═══════════════════════════════════════════════
+// LOAD DATES
+// ═══════════════════════════════════════════════
 async function loadDates() {
-  if (!accessToken) { ensureAuth(() => loadDates()); return; }
+  if (!accessToken) { ensureAuth(loadDates); return; }
   setStatus('Laden...', '');
 
-  const range = encodeURIComponent(`${state.config.sheetName}!A3:X200`);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${state.config.sheetId}/values/${range}`;
+  const range = encodeURIComponent(`${PROGRESSIE_TAB}!A3:X300`);
+  const url   = `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`;
 
   try {
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const res  = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
     const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
+
+    if (data.error) {
+      const c = data.error.code;
+      if (c === 401) { clearToken(); showLoginBtn(); throw new Error('Sessie verlopen — log opnieuw in'); }
+      if (c === 403) throw new Error('Geen toegang tot sheet (403)');
+      if (c === 404) throw new Error('Sheet niet gevonden (404) — controleer link');
+      throw new Error(`Fout ${c}: ${data.error.message}`);
+    }
 
     state.sheetData = data.values || [];
-    renderDateGrid();
+    renderDatePicker();
     autoSelectToday();
     setStatus('Verbonden', 'connected');
-    document.getElementById('loadDatesBtn').style.display = 'flex';
+    document.getElementById('loadDatesBtn').classList.add('show');
   } catch(e) {
     setStatus('Fout bij laden', 'error');
     showToast('❌ ' + e.message, 'error');
   }
 }
 
-
-// ─── Render date dropdown ─────────────────────────────────
-function renderDateGrid() {
+// ═══════════════════════════════════════════════
+// DATE PICKER
+// ═══════════════════════════════════════════════
+function renderDatePicker() {
   const picker = document.getElementById('datePicker');
-  const placeholder = document.getElementById('datePickerPlaceholder');
   picker.innerHTML = '<option value="">— Kies een datum —</option>';
 
-  let found = 0;
   state.sheetData.forEach((row, idx) => {
-    const datum = (row[1] || '').trim(); // col B
+    const datum = (row[1] || '').trim();
     if (!datum) return;
-    const dag = (row[2] || '').trim();   // col C
+    const dag     = (row[2] || '').trim();
     const gewicht = (row[5] || '').trim();
-    const isFilled = gewicht !== '';
-
-    const opt = document.createElement('option');
-    opt.value = idx;
-    opt.textContent = isFilled ? `✓  ${datum} (${dag})` : `${datum} (${dag})`;
-    if (isFilled) opt.style.color = '#3ee6a0';
+    const filled  = gewicht !== '';
+    const opt     = document.createElement('option');
+    opt.value     = idx;
+    opt.textContent = filled ? `✓  ${datum} (${dag})` : `${datum} (${dag})`;
+    if (filled) opt.style.color = 'var(--green)';
     picker.appendChild(opt);
-    found++;
   });
-
-  if (found > 0) {
-    picker.style.display = 'block';
-    if (placeholder) placeholder.style.display = 'none';
-  }
 }
 
 function autoSelectToday() {
-  // Format today as dd/mmm/yy to match sheet format e.g. "18/mei/26"
-  const now = new Date();
-  const day = String(now.getDate()).padStart(2, '0');
-  const monthsNL = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
-  const month = monthsNL[now.getMonth()];
-  const year = String(now.getFullYear()).slice(-2);
-  const todayStr = `${day}/${month}/${year}`;
+  const now  = new Date();
+  const d    = String(now.getDate()).padStart(2,'0');
+  const mNL  = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+  const m    = mNL[now.getMonth()];
+  const y    = String(now.getFullYear()).slice(-2);
+  const today = `${d}/${m}/${y}`;
 
-  const idx = state.sheetData.findIndex(row => (row[1] || '').trim() === todayStr);
+  const idx = state.sheetData.findIndex(r => (r[1]||'').trim() === today);
   if (idx !== -1) {
-    const picker = document.getElementById('datePicker');
-    if (picker) picker.value = idx;
+    document.getElementById('datePicker').value = idx;
     const row = state.sheetData[idx];
-    selectDate(idx, (row[1] || '').trim(), (row[2] || '').trim());
+    selectDate(idx, (row[1]||'').trim(), (row[2]||'').trim());
   }
 }
 
 function onDatePickerChange() {
   const picker = document.getElementById('datePicker');
-  const idx = picker.value;
-  if (idx === '') { clearDate(); return; }
+  const idx    = picker.value;
+  if (idx === '') { document.getElementById('formArea').style.display = 'none'; return; }
   const row = state.sheetData[parseInt(idx)] || [];
-  const datum = (row[1] || '').trim();
-  const dag = (row[2] || '').trim();
-  selectDate(parseInt(idx), datum, dag);
+  selectDate(parseInt(idx), (row[1]||'').trim(), (row[2]||'').trim());
 }
 
-// ─── Reset all form fields to defaults ───────────────────
-function resetForm() {
-  document.getElementById('cardio').value = '';
-  document.getElementById('bijzonderheden').value = '';
-  document.getElementById('gewicht').value = '';
-  document.getElementById('khd').value = '';
-  document.getElementById('eiwitten').value = '';
-  document.getElementById('vetten').value = '';
-  document.getElementById('vezels').value = '';
-  document.getElementById('water').value = '';
-  document.getElementById('slaap').value = '';
-  document.getElementById('stappen').value = '';
-
-  // Reset dropdowns to empty
-  ['ontlasting','kracht','energie','honger','verwachting'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.selectedIndex = 0;
-  });
-
-  // Reset Ja/Nee toggles to neutral
-  ['omega3','magn','creatine'].forEach(field => {
-    state.jaNeeValues[field] = '';
-    document.querySelectorAll(`[data-field="${field}"]`).forEach(b => b.className = 'toggle-btn');
-  });
-}
-
-// ─── Step date with arrows ────────────────────────────────
 function stepDate(dir) {
   const picker = document.getElementById('datePicker');
-  const opts = Array.from(picker.options).filter(o => o.value !== '');
+  const opts   = Array.from(picker.options).filter(o => o.value !== '');
   if (!opts.length) return;
-  const currentVal = picker.value;
-  const currentIdx = opts.findIndex(o => o.value === currentVal);
-  let nextIdx = currentIdx + dir;
-  if (nextIdx < 0) nextIdx = 0;
-  if (nextIdx >= opts.length) nextIdx = opts.length - 1;
-  picker.value = opts[nextIdx].value;
+  const cur  = opts.findIndex(o => o.value === picker.value);
+  const next = Math.max(0, Math.min(opts.length - 1, cur + dir));
+  picker.value = opts[next].value;
   onDatePickerChange();
 }
 
-// ─── Select a date ────────────────────────────────────────
+// ═══════════════════════════════════════════════
+// SELECT DATE & PREFILL
+// ═══════════════════════════════════════════════
 function selectDate(rowIndex, datum, dag) {
   state.selectedRow = { rowIndex, datum, dag };
+  state.isSaved     = false;
 
-  // Sync dropdown
-  const picker = document.getElementById('datePicker');
-  picker.value = rowIndex;
-
-  // Show form
-  const formArea = document.getElementById('formArea');
-  formArea.style.display = 'block';
-
-  // Reset saved state when switching dates
-  isSaved = false;
-  const btn = document.getElementById('submitBtn');
-  btn.innerHTML = '✓ Opslaan in Google Sheets';
-  btn.style.background = '';
-  btn.style.color = '';
-
-  // Wire change listeners to detect edits after save
-  formArea.oninput = markDirty;
-  formArea.onchange = markDirty;
-
-  // Always reset first so empty sheet cells don't show previous day's data
   resetForm();
 
   const row = state.sheetData[rowIndex] || [];
 
-  // Helper: normalize number (sheet uses comma as decimal separator)
-  const num = (val) => val ? val.toString().replace(',', '.') : '';
-
-  // Helper: set input only if value exists
   const setVal = (id, val) => {
     if (val === undefined || val === null || val === '') return;
     const el = document.getElementById(id);
     if (el) el.value = val;
   };
-
-  // Helper: set number input (handles comma decimals)
   const setNum = (id, val) => {
-    if (val === undefined || val === null || val === '') return;
+    if (!val && val !== 0) return;
     const el = document.getElementById(id);
-    if (el) el.value = num(val);
+    if (el) el.value = val.toString().replace(',', '.');
   };
-
-  // Helper: set select by text match (case insensitive)
+  const setTxt = (id, val) => {
+    if (!val) return;
+    const el = document.getElementById(id);
+    if (el) el.value = val; // keep original (comma) for text fields
+  };
   const setSelect = (id, val) => {
-    if (!val || val === '') return;
+    if (!val) return;
     const el = document.getElementById(id);
     if (!el) return;
     const opt = Array.from(el.options).find(o => o.text.toLowerCase() === val.toString().toLowerCase());
     if (opt) el.value = opt.value;
   };
-
-  // Helper: set Ja/Nee toggle only if value exists in sheet
   const setToggle = (field, val) => {
-    if (!val || val === '') return;
-    const btns = document.querySelectorAll(`[data-field="${field}"]`);
-    btns.forEach(b => b.className = 'toggle-btn');
-    const target = Array.from(btns).find(b => b.dataset.val === val);
-    if (target) {
-      state.jaNeeValues[field] = val;
-      target.classList.add(val === 'Ja' ? 'active-ja' : 'active-nee');
-    }
+    if (!val) return;
+    document.querySelectorAll(`[data-field="${field}"]`).forEach(b => b.className = 'toggle-btn');
+    const t = Array.from(document.querySelectorAll(`[data-field="${field}"]`)).find(b => b.dataset.val === val);
+    if (t) { state.jaNeeValues[field] = val; t.classList.add(val === 'Ja' ? 'active-ja' : 'active-nee'); }
   };
 
-  // Col mapping (0-based):
-  // A=0(leeg) B=1 datum C=2 dag D=3 cardio E=4 bijz F=5 gewicht
-  // G=6 kcal(calc) H=7 KHD I=8 eiwit J=9 vet K=10 vezels L=11 water
+  // B=1 datum C=2 dag D=3 cardio E=4 bijz F=5 gewicht G=6 kcal(calc)
+  // H=7 KHD I=8 eiwit J=9 vet K=10 vezels L=11 water
   // M=12 omega3 N=13 magn O=14 creatine P=15 ontlasting Q=16 kracht
   // R=17 energie S=18 honger T=19 slaap U=20 stappen V=21 verwachting
   setVal('cardio',         row[3]);
   setVal('bijzonderheden', row[4]);
-  setNum('gewicht',        row[5]);
+  setTxt('gewicht',        row[5]);
   setNum('khd',            row[7]);
   setNum('eiwitten',       row[8]);
   setNum('vetten',         row[9]);
@@ -1131,119 +913,140 @@ function selectDate(rowIndex, datum, dag) {
   setVal('slaap',          row[19]);
   setVal('stappen',        row[20]);
   setSelect('verwachting', row[21]);
-}
 
-function clearDate() {
-  state.selectedRow = null;
-  document.getElementById('formArea').style.display = 'none';
-  const picker = document.getElementById('datePicker');
-  if (picker) picker.value = '';
-}
+  // Sunday: show metingen section
+  const sunday = dag.toLowerCase() === 'zo';
+  document.getElementById('metingenSection').style.display = sunday ? 'block' : 'none';
+  if (sunday) loadMetingen(datum);
 
-// ─── Dirty state (unsaved changes) ───────────────────────
-let isSaved = false;
+  // Show form
+  const formArea = document.getElementById('formArea');
+  formArea.style.display = 'block';
 
-function markDirty() {
-  if (!isSaved) return; // already in unsaved state
-  isSaved = false;
+  // Reset submit button
   const btn = document.getElementById('submitBtn');
   btn.innerHTML = '✓ Opslaan in Google Sheets';
+  btn.classList.remove('saved');
+  btn.style.background = '';
+  btn.style.color = '';
+
+  // Detect changes
+  formArea.oninput  = markDirty;
+  formArea.onchange = markDirty;
+}
+
+function resetForm() {
+  ['cardio','bijzonderheden','gewicht','khd','eiwitten','vetten','vezels','water','slaap','stappen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['ontlasting','kracht','energie','honger','verwachting'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
+  ['omega3','magn','creatine'].forEach(f => {
+    state.jaNeeValues[f] = '';
+    document.querySelectorAll(`[data-field="${f}"]`).forEach(b => b.className = 'toggle-btn');
+  });
+  ['meting_navel','meting_heup','meting_arm','meting_been','meting_borst'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+// ═══════════════════════════════════════════════
+// DIRTY STATE
+// ═══════════════════════════════════════════════
+function markDirty() {
+  if (!state.isSaved) return;
+  state.isSaved = false;
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '✓ Opslaan in Google Sheets';
+  btn.classList.remove('saved');
   btn.style.background = '';
   btn.style.color = '';
 }
 
-// ─── Toggle Ja/Nee ────────────────────────────────────────
+// ═══════════════════════════════════════════════
+// TOGGLE / STEP
+// ═══════════════════════════════════════════════
 function toggleJaNee(btn, field) {
-  const group = btn.closest('.toggle-group');
-  group.querySelectorAll('.toggle-btn').forEach(b => b.className = 'toggle-btn');
-  const val = btn.dataset.val;
-  state.jaNeeValues[field] = val;
-  btn.classList.add(val === 'Ja' ? 'active-ja' : 'active-nee');
+  btn.closest('.toggle-group').querySelectorAll('.toggle-btn').forEach(b => b.className = 'toggle-btn');
+  state.jaNeeValues[field] = btn.dataset.val;
+  btn.classList.add(btn.dataset.val === 'Ja' ? 'active-ja' : 'active-nee');
   markDirty();
 }
 
-// ─── Step counter ─────────────────────────────────────────
 function stepField(id, delta) {
-  const el = document.getElementById(id);
+  const el  = document.getElementById(id);
   const val = parseFloat(el.value) || 0;
-  el.value = Math.max(0, +(val + delta).toFixed(1));
+  el.value  = Math.max(0, +(val + delta).toFixed(1));
   markDirty();
 }
 
-// ─── Submit ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════
+// SUBMIT
+// ═══════════════════════════════════════════════
 async function submitForm() {
-  if (!state.selectedRow) { showToast('Selecteer eerst een datum', 'error'); return; }
-  if (!accessToken) { ensureAuth(() => submitForm()); return; }
+  if (!state.selectedRow) return;
+  if (!accessToken) { ensureAuth(submitForm); return; }
 
   const btn = document.getElementById('submitBtn');
-  btn.disabled = true;
+  btn.disabled  = true;
   btn.innerHTML = '<span class="spinner"></span> Opslaan...';
 
-  // Build the values array matching columns D through S (skipping A,B,C which are date/day/preset)
-  // Sheet columns (1-based): A=Datum B=Dag C=Cardio D=Bijzonderheden ... let's map carefully
-  // From screenshot: C=Cardio, D=Bijzonderheden(notes), E=... wait re-examining:
-  // A=Datum, B=Dag, C=Aantal min cardio, D=Bijzonderheden(notes), E=..., F=Gewicht
-  // G=Kcal(calculated), H=KHD, I=Eiwitten, J=Vetten, K=Vezels, L=Water
-  // M=Omega3, N=Magn, O=Creatine, P=Ontlasting, Q=Kracht, R=Energie
-  // S=Honger, T=Slaap, U=Stappen, V=Verwachting
+  const rowNum  = state.selectedRow.rowIndex + 3;
+  const sheet   = PROGRESSIE_TAB;
+  const gewicht = (document.getElementById('gewicht').value || '').replace('.', ',');
 
-  // Sheet rows: row 1=headers, row 2=targets, row 3=first data row
-  // sheetData index 0 = sheet row 3, so rowIndex+3
-  const rowNum = state.selectedRow.rowIndex + 3;
-
-  // Col mapping: A(leeg) B=Datum C=Dag D=Cardio E=Bijz F=Gewicht G=Kcal(calc)
-  // H=KHD I=Eiwit J=Vet K=Vezels L=Water M=Omega3 N=Magn O=Creatine
-  // P=Ontlasting Q=Kracht R=Energie S=Honger T=Slaap U=Stappen V=Verwachting
   const updates = [
-    { range: `${state.config.sheetName}!D${rowNum}`, values: [[v('cardio')]] },
-    { range: `${state.config.sheetName}!E${rowNum}`, values: [[v('bijzonderheden')]] },
-    { range: `${state.config.sheetName}!F${rowNum}`, values: [[vGewicht()]] },
-    { range: `${state.config.sheetName}!H${rowNum}`, values: [[v('khd')]] },
-    { range: `${state.config.sheetName}!I${rowNum}`, values: [[v('eiwitten')]] },
-    { range: `${state.config.sheetName}!J${rowNum}`, values: [[v('vetten')]] },
-    { range: `${state.config.sheetName}!K${rowNum}`, values: [[v('vezels')]] },
-    { range: `${state.config.sheetName}!L${rowNum}`, values: [[v('water')]] },
-    { range: `${state.config.sheetName}!M${rowNum}`, values: [[state.jaNeeValues.omega3]] },
-    { range: `${state.config.sheetName}!N${rowNum}`, values: [[state.jaNeeValues.magn]] },
-    { range: `${state.config.sheetName}!O${rowNum}`, values: [[state.jaNeeValues.creatine]] },
-    { range: `${state.config.sheetName}!P${rowNum}`, values: [[sv('ontlasting')]] },
-    { range: `${state.config.sheetName}!Q${rowNum}`, values: [[sv('kracht')]] },
-    { range: `${state.config.sheetName}!R${rowNum}`, values: [[sv('energie')]] },
-    { range: `${state.config.sheetName}!S${rowNum}`, values: [[sv('honger')]] },
-    { range: `${state.config.sheetName}!T${rowNum}`, values: [[v('slaap')]] },
-    { range: `${state.config.sheetName}!U${rowNum}`, values: [[v('stappen')]] },
-    { range: `${state.config.sheetName}!V${rowNum}`, values: [[sv('verwachting')]] },
+    { range: `${sheet}!D${rowNum}`, values: [[v('cardio')]] },
+    { range: `${sheet}!E${rowNum}`, values: [[v('bijzonderheden')]] },
+    { range: `${sheet}!F${rowNum}`, values: [[gewicht]] },
+    { range: `${sheet}!H${rowNum}`, values: [[v('khd')]] },
+    { range: `${sheet}!I${rowNum}`, values: [[v('eiwitten')]] },
+    { range: `${sheet}!J${rowNum}`, values: [[v('vetten')]] },
+    { range: `${sheet}!K${rowNum}`, values: [[v('vezels')]] },
+    { range: `${sheet}!L${rowNum}`, values: [[v('water')]] },
+    { range: `${sheet}!M${rowNum}`, values: [[state.jaNeeValues.omega3]] },
+    { range: `${sheet}!N${rowNum}`, values: [[state.jaNeeValues.magn]] },
+    { range: `${sheet}!O${rowNum}`, values: [[state.jaNeeValues.creatine]] },
+    { range: `${sheet}!P${rowNum}`, values: [[sv('ontlasting')]] },
+    { range: `${sheet}!Q${rowNum}`, values: [[sv('kracht')]] },
+    { range: `${sheet}!R${rowNum}`, values: [[sv('energie')]] },
+    { range: `${sheet}!S${rowNum}`, values: [[sv('honger')]] },
+    { range: `${sheet}!T${rowNum}`, values: [[v('slaap')]] },
+    { range: `${sheet}!U${rowNum}`, values: [[v('stappen')]] },
+    { range: `${sheet}!V${rowNum}`, values: [[sv('verwachting')]] },
   ];
 
-  const body = { valueInputOption: 'USER_ENTERED', data: updates };
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${state.config.sheetId}/values:batchUpdate`;
-
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
+    const res  = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data: updates })
+      }
+    );
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
 
-    // Update in-memory sheetData so "ingevuld" marker updates without reload
-    const row = state.sheetData[state.selectedRow.rowIndex] || [];
-    row[5] = vGewicht(); // mark as filled
-    state.sheetData[state.selectedRow.rowIndex] = row;
-    renderDateGrid();
-    // Re-sync picker to current date (renderDateGrid rebuilds options)
-    const picker = document.getElementById('datePicker');
-    if (picker) picker.value = state.selectedRow.rowIndex;
+    // Sunday: also save metingen
+    if (state.selectedRow.dag.toLowerCase() === 'zo') {
+      await submitMetingen();
+    }
 
-    // Green success button — resets when user changes anything
-    isSaved = true;
+    // Update in-memory filled marker
+    const row = state.sheetData[state.selectedRow.rowIndex] || [];
+    row[5] = gewicht;
+    renderDatePicker();
+    document.getElementById('datePicker').value = state.selectedRow.rowIndex;
+
+    // Green saved button
+    state.isSaved = true;
     btn.innerHTML = '✓ Opgeslagen!';
-    btn.style.background = 'var(--accent2)';
-    btn.style.color = '#0f1117';
+    btn.classList.add('saved');
 
   } catch(e) {
     showToast('❌ ' + e.message, 'error');
@@ -1252,37 +1055,83 @@ async function submitForm() {
   }
 }
 
-function v(id) {
-  return document.getElementById(id)?.value ?? '';
-}
-// Gewicht: accepteer komma of punt, schrijf altijd met komma naar sheet
-function vGewicht() {
-  const raw = document.getElementById('gewicht')?.value ?? '';
-  // Replace dot with comma for Dutch sheet format
-  return raw.replace('.', ',');
-}
-function sv(id) {
-  const el = document.getElementById(id);
-  return el ? el.options[el.selectedIndex]?.text || '' : '';
+// ═══════════════════════════════════════════════
+// METINGEN
+// ═══════════════════════════════════════════════
+async function loadMetingen(datum) {
+  if (!accessToken) return;
+  try {
+    const range = encodeURIComponent(`${METINGEN_TAB}!B2:H100`);
+    const res   = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const data = await res.json();
+    if (data.error || !data.values) return;
+
+    const row = data.values.find(r => datumMatch(datum, (r[0]||'').toString()));
+    if (!row) return;
+
+    ['meting_navel','meting_heup','meting_arm','meting_been','meting_borst'].forEach((id, i) => {
+      if (row[i+2]) document.getElementById(id).value = row[i+2];
+    });
+  } catch(e) { console.error('loadMetingen:', e); }
 }
 
-// ─── Toast ────────────────────────────────────────────────
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  document.getElementById('toastMsg').textContent = msg;
-  t.className = 'toast ' + (type || '');
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+async function submitMetingen() {
+  const vals = ['meting_navel','meting_heup','meting_arm','meting_been','meting_borst'].map(id => document.getElementById(id).value);
+  if (vals.every(v => !v)) return;
+
+  try {
+    const range = encodeURIComponent(`${METINGEN_TAB}!B2:B100`);
+    const res   = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const data  = await res.json();
+    const rows  = data.values || [];
+    let rowNum  = null;
+    rows.forEach((r, i) => { if (datumMatch(state.selectedRow.datum, (r[0]||'').toString())) rowNum = i + 2; });
+    if (!rowNum) { showToast('⚠️ Datum niet in Metingen tabblad', 'error'); return; }
+
+    const updates = [
+      { range: `${METINGEN_TAB}!D${rowNum}`, values: [[vals[0]]] },
+      { range: `${METINGEN_TAB}!E${rowNum}`, values: [[vals[1]]] },
+      { range: `${METINGEN_TAB}!F${rowNum}`, values: [[vals[2]]] },
+      { range: `${METINGEN_TAB}!G${rowNum}`, values: [[vals[3]]] },
+      { range: `${METINGEN_TAB}!H${rowNum}`, values: [[vals[4]]] },
+    ];
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data: updates })
+      }
+    );
+  } catch(e) { console.error('submitMetingen:', e); }
 }
 
-// ─── Init ─────────────────────────────────────────────────
-loadConfig();
-if (state.config.sheetId) {
-  initGoogleAuth();
-} else {
-  document.getElementById('configPanel').classList.add('visible');
-  setStatus('Vul Spreadsheet ID in', 'default');
+function datumMatch(progressie, metingen) {
+  try {
+    const mNL = {jan:0,feb:1,mrt:2,apr:3,mei:4,jun:5,jul:6,aug:7,sep:8,okt:9,nov:10,dec:11};
+    const p   = progressie.split('/');
+    const a   = new Date(2000+parseInt(p[2]), mNL[p[1].toLowerCase()], parseInt(p[0])).toDateString();
+    const b   = new Date(metingen).toDateString();
+    return a === b;
+  } catch(e) { return false; }
 }
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function v(id)  { return document.getElementById(id)?.value ?? ''; }
+function sv(id) { const el = document.getElementById(id); return el ? (el.options[el.selectedIndex]?.text || '') : ''; }
+
+// ═══════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════
+init();
 </script>
 </body>
 </html>
