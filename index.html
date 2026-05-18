@@ -802,15 +802,16 @@ function renderDateGrid() {
   const grid = document.getElementById('dateGrid');
   grid.innerHTML = '';
 
-  // Find rows that have a date in col A but no weight in col F (empty = not yet filled)
-  // Col mapping (0-based): A=0 datum, B=1 dag, F=5 gewicht
-  const today = new Date().toLocaleDateString('nl-NL', {day:'2-digit',month:'2-digit',year:'2-digit'});
+  // Col mapping (0-based): A=0(leeg), B=1 datum, C=2 dag, D=3 cardio, E=4 bijz, F=5 gewicht
+  // G=6 kcal(calc), H=7 KHD, I=8 eiwit, J=9 vet, K=10 vezels, L=11 water
+  // M=12 omega3, N=13 magn, O=14 creatine, P=15 ontlasting, Q=16 kracht, R=17 energie
+  // S=18 honger, T=19 slaap, U=20 stappen, V=21 verwachting
   let count = 0;
 
   state.sheetData.forEach((row, idx) => {
-    const datum = (row[0] || '').trim();
+    const datum = (row[1] || '').trim(); // col B
     if (!datum) return;
-    const dag = (row[1] || '').trim();
+    const dag = (row[2] || '').trim();   // col C
     const gewicht = (row[5] || '').trim(); // col F
     const isFilled = gewicht !== '';
 
@@ -851,14 +852,14 @@ function selectDate(rowIndex, datum, dag) {
 
   // Pre-fill existing data if any
   const row = state.sheetData[rowIndex] || [];
-  if (row[3]) document.getElementById('cardio').value = row[3];         // D
-  if (row[4]) document.getElementById('bijzonderheden').value = row[4]; // E
-  if (row[5]) document.getElementById('gewicht').value = row[5];        // F
-  if (row[7]) document.getElementById('khd').value = row[7];            // H
-  if (row[8]) document.getElementById('eiwitten').value = row[8];       // I
-  if (row[9]) document.getElementById('vetten').value = row[9];         // J
-  if (row[10]) document.getElementById('vezels').value = row[10];       // K
-  if (row[11]) document.getElementById('water').value = row[11];        // L
+  if (row[3])  document.getElementById('cardio').value = row[3];         // D
+  if (row[4])  document.getElementById('bijzonderheden').value = row[4]; // E
+  if (row[5])  document.getElementById('gewicht').value = row[5];        // F
+  if (row[7])  document.getElementById('khd').value = row[7];            // H
+  if (row[8])  document.getElementById('eiwitten').value = row[8];       // I
+  if (row[9])  document.getElementById('vetten').value = row[9];         // J
+  if (row[10]) document.getElementById('vezels').value = row[10];        // K
+  if (row[11]) document.getElementById('water').value = row[11];         // L
 
   window.scrollTo({ top: document.getElementById('formArea').offsetTop - 80, behavior: 'smooth' });
 }
@@ -903,28 +904,32 @@ async function submitForm() {
   // M=Omega3, N=Magn, O=Creatine, P=Ontlasting, Q=Kracht, R=Energie
   // S=Honger, T=Slaap, U=Stappen, V=Verwachting
 
-  const rowIndex = state.selectedRow.rowIndex + 3; // +3 because sheet data starts at row 3
+  // Sheet rows: row 1=headers, row 2=targets, row 3=first data row
+  // sheetData index 0 = sheet row 3, so rowIndex+3
+  const rowNum = state.selectedRow.rowIndex + 3;
 
-  // We update individual ranges to avoid overwriting date/day cells
+  // Col mapping: A(leeg) B=Datum C=Dag D=Cardio E=Bijz F=Gewicht G=Kcal(calc)
+  // H=KHD I=Eiwit J=Vet K=Vezels L=Water M=Omega3 N=Magn O=Creatine
+  // P=Ontlasting Q=Kracht R=Energie S=Honger T=Slaap U=Stappen V=Verwachting
   const updates = [
-    { range: `${state.config.sheetName}!C${rowIndex}`, values: [[v('cardio')]] },
-    { range: `${state.config.sheetName}!D${rowIndex}`, values: [[v('bijzonderheden')]] },
-    { range: `${state.config.sheetName}!F${rowIndex}`, values: [[v('gewicht')]] },
-    { range: `${state.config.sheetName}!H${rowIndex}`, values: [[v('khd')]] },
-    { range: `${state.config.sheetName}!I${rowIndex}`, values: [[v('eiwitten')]] },
-    { range: `${state.config.sheetName}!J${rowIndex}`, values: [[v('vetten')]] },
-    { range: `${state.config.sheetName}!K${rowIndex}`, values: [[v('vezels')]] },
-    { range: `${state.config.sheetName}!L${rowIndex}`, values: [[v('water')]] },
-    { range: `${state.config.sheetName}!M${rowIndex}`, values: [[state.jaNeeValues.omega3]] },
-    { range: `${state.config.sheetName}!N${rowIndex}`, values: [[state.jaNeeValues.magn]] },
-    { range: `${state.config.sheetName}!O${rowIndex}`, values: [[state.jaNeeValues.creatine]] },
-    { range: `${state.config.sheetName}!P${rowIndex}`, values: [[sv('ontlasting')]] },
-    { range: `${state.config.sheetName}!Q${rowIndex}`, values: [[sv('kracht')]] },
-    { range: `${state.config.sheetName}!R${rowIndex}`, values: [[sv('energie')]] },
-    { range: `${state.config.sheetName}!S${rowIndex}`, values: [[sv('honger')]] },
-    { range: `${state.config.sheetName}!T${rowIndex}`, values: [[v('slaap')]] },
-    { range: `${state.config.sheetName}!U${rowIndex}`, values: [[v('stappen')]] },
-    { range: `${state.config.sheetName}!V${rowIndex}`, values: [[sv('verwachting')]] },
+    { range: `${state.config.sheetName}!D${rowNum}`, values: [[v('cardio')]] },
+    { range: `${state.config.sheetName}!E${rowNum}`, values: [[v('bijzonderheden')]] },
+    { range: `${state.config.sheetName}!F${rowNum}`, values: [[v('gewicht')]] },
+    { range: `${state.config.sheetName}!H${rowNum}`, values: [[v('khd')]] },
+    { range: `${state.config.sheetName}!I${rowNum}`, values: [[v('eiwitten')]] },
+    { range: `${state.config.sheetName}!J${rowNum}`, values: [[v('vetten')]] },
+    { range: `${state.config.sheetName}!K${rowNum}`, values: [[v('vezels')]] },
+    { range: `${state.config.sheetName}!L${rowNum}`, values: [[v('water')]] },
+    { range: `${state.config.sheetName}!M${rowNum}`, values: [[state.jaNeeValues.omega3]] },
+    { range: `${state.config.sheetName}!N${rowNum}`, values: [[state.jaNeeValues.magn]] },
+    { range: `${state.config.sheetName}!O${rowNum}`, values: [[state.jaNeeValues.creatine]] },
+    { range: `${state.config.sheetName}!P${rowNum}`, values: [[sv('ontlasting')]] },
+    { range: `${state.config.sheetName}!Q${rowNum}`, values: [[sv('kracht')]] },
+    { range: `${state.config.sheetName}!R${rowNum}`, values: [[sv('energie')]] },
+    { range: `${state.config.sheetName}!S${rowNum}`, values: [[sv('honger')]] },
+    { range: `${state.config.sheetName}!T${rowNum}`, values: [[v('slaap')]] },
+    { range: `${state.config.sheetName}!U${rowNum}`, values: [[v('stappen')]] },
+    { range: `${state.config.sheetName}!V${rowNum}`, values: [[sv('verwachting')]] },
   ];
 
   const body = { valueInputOption: 'USER_ENTERED', data: updates };
