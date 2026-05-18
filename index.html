@@ -99,6 +99,19 @@ header {
 }
 .icon-btn:hover { border-color: var(--gold); color: var(--gold); }
 
+/* ── Fit sync button ── */
+.fit-sync-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 20px;
+  border: 1px solid rgba(45,212,160,0.3);
+  background: rgba(45,212,160,0.08);
+  color: var(--green); font-family: var(--mono);
+  font-size: 11px; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.fit-sync-btn:hover { background: rgba(45,212,160,0.15); }
+.fit-sync-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* ── Logout button ── */
 .logout-btn {
   font-family: var(--mono); font-size: 10px;
@@ -382,15 +395,20 @@ textarea { resize: vertical; min-height: 68px; font-size: 14px; }
       </select>
       <button class="nav-arrow" onclick="stepDate(1)">›</button>
     </div>
-    <button class="load-btn" id="loadDatesBtn" onclick="loadDates()">
-      🔄 Vernieuwen
-    </button>
   </div>
 
   <!-- Form area -->
   <div id="formArea" style="display:none">
 
-    <!-- Gewicht -->
+    <!-- Fit sync bar -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <button class="fit-sync-btn" onclick="syncFit()">
+        <span id="fitSyncIcon">⚡</span> Sync Google Fit
+      </button>
+      <div id="fitStatus" style="display:none;font-size:11px;color:var(--green);font-family:var(--mono);flex:1;"></div>
+    </div>
+
+  <!-- Gewicht -->
     <div class="form-section">
       <div class="section-label">Gewicht</div>
       <div class="weight-wrap">
@@ -683,16 +701,24 @@ function loadGIS(clientId) {
   document.head.appendChild(s);
 }
 
+const FIT_SCOPES = [
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/fitness.activity.read',
+  'https://www.googleapis.com/auth/fitness.sleep.read',
+  'https://www.googleapis.com/auth/fitness.nutrition.read',
+  'https://www.googleapis.com/auth/fitness.body.read',
+].join(' ');
+
 function setupTokenClient(clientId) {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: clientId,
-    scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email',
+    scope: FIT_SCOPES,
     callback: async (resp) => {
       if (resp.error) { setStatus('Auth mislukt', 'error'); showLoginBtn(); return; }
       saveToken(resp.access_token, resp.expires_in || 3600);
       hideLoginBtn();
       setStatus('Verbonden', 'connected');
-      // Fetch user email
       fetchUserEmail(resp.access_token);
       showDateSection();
       loadDates();
@@ -1149,8 +1175,146 @@ function datumMatch(progressie, metingen) {
 }
 
 // ═══════════════════════════════════════════════
-// HELPERS
+// GOOGLE FIT
 // ═══════════════════════════════════════════════
+
+// Convert "18/mei/26" to start/end epoch milliseconds for that day
+function datumToEpoch(datum) {
+  const mNL = {jan:0,feb:1,mrt:2,apr:3,mei:4,jun:5,jul:6,aug:7,sep:8,okt:9,nov:10,dec:11};
+  const p   = datum.split('/');
+  const d   = parseInt(p[0]);
+  const m   = mNL[p[1].toLowerCase()];
+  const y   = 2000 + parseInt(p[2]);
+  const start = new Date(y, m, d, 0, 0, 0).getTime();
+  const end   = new Date(y, m, d, 23, 59, 59).getTime();
+  return { start, end };
+}
+
+async function syncFit() {
+  if (!state.selectedRow) return;
+  const btn = document.querySelector('.fit-sync-btn');
+  btn.disabled = true;
+  document.getElementById('fitSyncIcon').textContent = '⏳';
+  await fetchFitData(state.selectedRow.datum);
+  btn.disabled = false;
+  document.getElementById('fitSyncIcon').textContent = '⚡';
+}
+
+
+  if (!accessToken) return;
+  const { start, end } = datumToEpoch(datum);
+
+  // Show loading indicator on fit fields
+  setFitStatus('⏳ Fit data laden...');
+
+  try {
+    await Promise.all([
+      fetchSteps(start, end),
+      fetchSleep(start, end),
+      fetchWeight(start, end),
+      fetchNutrition(start, end),
+    ]);
+    setFitStatus('✓ Google Fit data geladen');
+    setTimeout(() => setFitStatus(''), 3000);
+  } catch(e) {
+    console.error('Fit error:', e);
+    setFitStatus('⚠️ Fit data niet beschikbaar');
+    setTimeout(() => setFitStatus(''), 4000);
+  }
+}
+
+function setFitStatus(msg) {
+  let el = document.getElementById('fitStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+async function fitAggregate(dataTypeName, bucketStart, bucketEnd) {
+  const body = {
+    aggregateBy: [{ dataTypeName }],
+    bucketByTime: { durationMillis: bucketEnd - bucketStart },
+    startTimeMillis: bucketStart,
+    endTimeMillis: bucketEnd,
+  };
+  const res = await fetch('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return await res.json();
+}
+
+async function fetchSteps(start, end) {
+  const data = await fitAggregate('com.google.step_count.delta', start, end);
+  const points = data.bucket?.[0]?.dataset?.[0]?.point || [];
+  const steps = points.reduce((sum, p) => sum + (p.value?.[0]?.intVal || 0), 0);
+  if (steps > 0) {
+    const el = document.getElementById('stappen');
+    if (el && !el.value) el.value = steps;
+  }
+}
+
+async function fetchSleep(start, end) {
+  // Sleep uses sessions API
+  const s = new Date(start).toISOString();
+  const e = new Date(end + 86400000).toISOString(); // +1 day for overnight sleep
+  const res = await fetch(
+    `https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${s}&endTime=${e}&activityType=72`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  const data = await res.json();
+  const sessions = data.session || [];
+  // Sum up sleep duration in hours
+  let totalMs = 0;
+  sessions.forEach(s => {
+    totalMs += parseInt(s.endTimeMillis) - parseInt(s.startTimeMillis);
+  });
+  if (totalMs > 0) {
+    const hours   = Math.floor(totalMs / 3600000);
+    const minutes = Math.floor((totalMs % 3600000) / 60000);
+    const el = document.getElementById('slaap');
+    if (el && !el.value) el.value = `${hours}:${String(minutes).padStart(2,'0')}`;
+  }
+}
+
+async function fetchWeight(start, end) {
+  const data = await fitAggregate('com.google.weight', start, end);
+  const points = data.bucket?.[0]?.dataset?.[0]?.point || [];
+  if (points.length > 0) {
+    const weight = points[points.length - 1]?.value?.[0]?.fpVal;
+    if (weight) {
+      const el = document.getElementById('gewicht');
+      if (el && !el.value) el.value = weight.toFixed(1).replace('.', ',');
+    }
+  }
+}
+
+async function fetchNutrition(start, end) {
+  const data = await fitAggregate('com.google.nutrition', start, end);
+  const points = data.bucket?.[0]?.dataset?.[0]?.point || [];
+
+  let khd = 0, eiwit = 0, vet = 0;
+  points.forEach(p => {
+    p.value?.forEach(v => {
+      if (v.mapVal) {
+        v.mapVal.forEach(entry => {
+          const key = entry.key;
+          const val = entry.value?.fpVal || 0;
+          if (key === 'carbs.total') khd  += val;
+          if (key === 'protein')     eiwit += val;
+          if (key === 'fat.total')   vet   += val;
+        });
+      }
+    });
+  });
+
+  if (khd > 0)   { const el = document.getElementById('khd');      if (el && !el.value) el.value = Math.round(khd); }
+  if (eiwit > 0) { const el = document.getElementById('eiwitten'); if (el && !el.value) el.value = Math.round(eiwit); }
+  if (vet > 0)   { const el = document.getElementById('vetten');   if (el && !el.value) el.value = Math.round(vet); }
+}
+
+
 function v(id)  { return document.getElementById(id)?.value ?? ''; }
 function sv(id) { const el = document.getElementById(id); return el ? (el.options[el.selectedIndex]?.text || '') : ''; }
 
