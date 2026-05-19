@@ -347,6 +347,7 @@ const state = {
   isSaved: true, doelen: {},
   planLoaded: false, weekvragenLoaded: false,
   weekvragenData: null,
+  currentWeekIdx: 0,
   currentTab: 'progressie'
 };
 
@@ -721,6 +722,7 @@ async function loadWeekvragen() {
 function renderWeekvragen(selectedIdx) {
   // Save any typed answers before switching week
   saveCurrentAnswersToMemory();
+  state.currentWeekIdx = selectedIdx;
   const { weeks, introText } = state.weekvragenData;
   const target = weeks[selectedIdx];
   const container = document.getElementById('weekvragenContent');
@@ -744,12 +746,6 @@ function renderWeekvragen(selectedIdx) {
   html += `<div class="form-section" style="margin-bottom:14px">
     <div class="section-label">Selecteer week</div>
     <select onchange="renderWeekvragen(parseInt(this.value))">${options}</select>
-  </div>`;
-
-  // Questions header
-  html += `<div class="weekvragen-header">
-    <div class="icon">✍️</div>
-    <div><h2>${escHtml(target.title)}</h2><p>Beantwoord de vragen voor deze week</p></div>
   </div>`;
 
   // Questions
@@ -810,11 +806,11 @@ async function submitWeekvragen(count) {
 function saveCurrentAnswersToMemory() {
   if (!state.weekvragenData) return;
   const { weeks } = state.weekvragenData;
-  weeks.forEach(w => {
-    w.questions.forEach((q, i) => {
-      const ta = document.getElementById(`wq_${i}`);
-      if (ta) q.value = ta.value;
-    });
+  const currentWeek = weeks[state.currentWeekIdx];
+  if (!currentWeek) return;
+  currentWeek.questions.forEach((q, i) => {
+    const ta = document.getElementById(`wq_${i}`);
+    if (ta) q.value = ta.value;
   });
 }
 
