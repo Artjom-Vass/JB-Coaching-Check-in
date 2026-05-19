@@ -9,694 +9,325 @@
 <meta name="apple-mobile-web-app-title" content="JB Check-in">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
-<title>JB Coaching · Check-in</title>
+<title>JB Coaching</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
 <style>
 :root {
-  --bg:       #0a0c12;
-  --s1:       #11141f;
-  --s2:       #171b28;
-  --s3:       #1e2335;
-  --border:   #252b3d;
-  --gold:     #f0b429;
-  --gold2:    #ffd166;
-  --green:    #2dd4a0;
-  --red:      #e05c5c;
-  --blue:     #5b8dee;
-  --text:     #e8eaf2;
-  --muted:    #5c6480;
-  --label:    #8b93b5;
-  --r:        14px;
-  --font:     'Space Grotesk', sans-serif;
-  --mono:     'JetBrains Mono', monospace;
+  --bg:     #0a0c12;
+  --s1:     #11141f;
+  --s2:     #171b28;
+  --s3:     #1e2335;
+  --border: #252b3d;
+  --gold:   #f0b429;
+  --gold2:  #ffd166;
+  --green:  #2dd4a0;
+  --red:    #e05c5c;
+  --text:   #e8eaf2;
+  --muted:  #5c6480;
+  --label:  #8b93b5;
+  --r:      14px;
+  --font:   'Space Grotesk', sans-serif;
+  --mono:   'JetBrains Mono', monospace;
+  --nav-h:  64px;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; font-size: 15px; line-height: 1.5; overflow-x: hidden; }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  min-height: 100vh;
-  font-size: 15px;
-  line-height: 1.5;
-  overflow-x: hidden;
-}
-
-/* ── Header ── */
-header {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(10,12,18,0.95);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 16px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.logo {
-  font-family: var(--font);
-  font-size: 16px; font-weight: 700;
-  letter-spacing: -0.5px;
-  display: flex; align-items: center; gap: 8px;
-}
-.logo-mark {
-  background: var(--gold);
-  color: #0a0c12;
-  font-size: 11px; font-weight: 700;
-  padding: 3px 7px;
-  border-radius: 6px;
-  letter-spacing: 0.5px;
-}
-.logo-text { color: var(--text); }
-
+/* Header */
+header { position: sticky; top: 0; z-index: 100; background: rgba(10,12,18,0.95); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; }
+.logo-mark { background: var(--gold); color: #0a0c12; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 6px; }
 .header-right { display: flex; align-items: center; gap: 8px; }
-
-.status-pill {
-  font-family: var(--mono);
-  font-size: 10px; padding: 4px 10px;
-  border-radius: 20px; border: 1px solid var(--border);
-  color: var(--muted);
-  display: flex; align-items: center; gap: 5px;
-  transition: all 0.3s;
-}
-.status-pill .dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--muted); transition: all 0.3s;
-}
-.status-pill.connected { color: var(--green); border-color: rgba(45,212,160,0.3); }
-.status-pill.connected .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
-.status-pill.error { color: var(--red); border-color: rgba(224,92,92,0.3); }
-.status-pill.error .dot { background: var(--red); }
-
-.icon-btn {
-  width: 34px; height: 34px;
-  background: var(--s2); border: 1px solid var(--border);
-  border-radius: 8px; color: var(--muted);
-  font-size: 15px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s;
-}
-.icon-btn:hover { border-color: var(--gold); color: var(--gold); }
-
-/* ── Fit sync button ── */
-.fit-sync-btn {
-  display: flex; align-items: center; gap: 6px;
-  padding: 7px 14px; border-radius: 20px;
-  border: 1px solid rgba(45,212,160,0.3);
-  background: rgba(45,212,160,0.08);
-  color: var(--green); font-family: var(--mono);
-  font-size: 11px; cursor: pointer;
-  transition: all 0.15s; white-space: nowrap;
-}
-.fit-sync-btn:hover { background: rgba(45,212,160,0.15); }
-.fit-sync-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-/* ── Logout button ── */
-.logout-btn {
-  font-family: var(--mono); font-size: 10px;
-  padding: 4px 10px; border-radius: 20px;
-  border: 1px solid rgba(224,92,92,0.3);
-  background: rgba(224,92,92,0.08);
-  color: var(--red); cursor: pointer;
-  transition: all 0.15s; white-space: nowrap;
-}
+.name-pill { font-family: var(--mono); font-size: 10px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); color: var(--muted); display: none; }
+.logout-btn { font-family: var(--mono); font-size: 10px; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(224,92,92,0.3); background: rgba(224,92,92,0.08); color: var(--red); cursor: pointer; transition: all 0.15s; display: none; }
 .logout-btn:hover { background: rgba(224,92,92,0.18); }
 
+/* Bottom nav */
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: rgba(10,12,18,0.97); backdrop-filter: blur(16px); border-top: 1px solid var(--border); display: none; height: var(--nav-h); padding-bottom: env(safe-area-inset-bottom); }
+.bottom-nav.visible { display: flex; }
+.nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: none; border: none; cursor: pointer; color: var(--muted); font-family: var(--font); font-size: 11px; font-weight: 500; transition: color 0.15s; padding: 8px 4px; position: relative; }
+.nav-tab .icon { font-size: 20px; line-height: 1; }
+.nav-tab.active { color: var(--gold); }
+.nav-tab.active::before { content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 2px; background: var(--gold); border-radius: 0 0 3px 3px; }
+.nav-tab.hidden { display: none; }
 
-main { max-width: 520px; margin: 0 auto; padding: 16px 14px 100px; }
+/* Pages */
+.page { display: none; padding: 16px 14px calc(var(--nav-h) + 20px); max-width: 520px; margin: 0 auto; }
+.page.active { display: block; }
 
-/* ── Welcome / No ID screen ── */
-.welcome-screen {
-  text-align: center; padding: 60px 20px;
-}
-.welcome-screen .big-icon { font-size: 56px; margin-bottom: 20px; }
-.welcome-screen h2 {
-  font-size: 22px; font-weight: 700;
-  margin-bottom: 10px; color: var(--text);
-}
-.welcome-screen p { color: var(--muted); font-size: 14px; line-height: 1.6; }
-
-/* ── Config / Setup ── */
-.panel {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 18px; margin-bottom: 14px;
-  display: none;
-}
-.panel.visible { display: block; }
-.panel-title {
-  font-size: 11px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 1.5px;
-  color: var(--gold); margin-bottom: 14px;
-  display: flex; align-items: center; gap: 8px;
-}
-
-/* ── Date section (sticky) ── */
-.date-section {
-  background: rgba(17,20,31,0.97);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 12px 14px; margin-bottom: 14px;
-  position: sticky; top: 57px; z-index: 90;
-  backdrop-filter: blur(16px);
-}
-.section-label {
-  font-family: var(--mono);
-  font-size: 10px; text-transform: uppercase;
-  letter-spacing: 1.5px; color: var(--muted);
-  margin-bottom: 10px;
-  display: flex; align-items: center; gap: 8px;
-}
-.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-.date-nav { display: flex; align-items: center; gap: 8px; }
-.date-nav select { flex: 1; }
-
-.nav-arrow {
-  width: 36px; height: 36px; flex-shrink: 0;
-  background: var(--s2); border: 1px solid var(--border);
-  border-radius: 8px; color: var(--text);
-  font-size: 20px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s; line-height: 1;
-}
-.nav-arrow:hover { border-color: var(--gold); color: var(--gold); }
-
-.load-btn {
-  width: 100%; margin-top: 10px; padding: 10px;
-  background: transparent; border: 1px dashed var(--border);
-  border-radius: 8px; color: var(--muted);
-  font-family: var(--font); font-size: 13px;
-  cursor: pointer; transition: all 0.15s;
-  display: none; align-items: center; justify-content: center; gap: 8px;
-}
-.load-btn:hover { border-color: var(--gold); color: var(--gold); }
-.load-btn.show { display: flex; }
-
-/* ── Form sections ── */
-.form-section {
-  background: var(--s1); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 18px; margin-bottom: 12px;
-}
-
-.field { margin-bottom: 13px; }
-.field:last-child { margin-bottom: 0; }
-
-label {
-  display: block; font-size: 12px; color: var(--label);
-  margin-bottom: 6px; font-weight: 500;
-}
-
-input[type="text"], input[type="number"], textarea, select {
-  width: 100%; background: var(--s2);
-  border: 1px solid var(--border); border-radius: 9px;
-  padding: 10px 13px; color: var(--text);
-  font-family: var(--font); font-size: 15px;
-  outline: none; transition: border-color 0.15s;
-  -webkit-appearance: none; appearance: none;
-}
-input:focus, select:focus, textarea:focus { border-color: var(--gold); }
-input::placeholder, textarea::placeholder { color: var(--muted); }
-
-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235c6480' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 13px center;
-  padding-right: 34px; cursor: pointer;
-}
-select option { background: var(--s2); }
-
-textarea { resize: vertical; min-height: 68px; font-size: 14px; }
-
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-
-/* ── Weight display ── */
-.weight-wrap {
-  display: flex; align-items: center; justify-content: center;
-  padding: 8px 0;
-}
-.weight-input-big {
-  font-size: 32px !important; font-family: var(--mono) !important;
-  color: var(--gold) !important; text-align: center;
-  width: 130px; border-color: transparent !important;
-  background: transparent !important; padding: 6px !important;
-}
-.weight-input-big:focus { border-color: var(--gold) !important; background: var(--s2) !important; border-radius: 9px !important; }
-.weight-unit { font-family: var(--mono); font-size: 18px; color: var(--muted); margin-left: 4px; }
-
-/* ── Step counter ── */
-.step-row { display: flex; align-items: center; gap: 8px; }
-.step-row input { text-align: center; }
-.step-btn {
-  width: 38px; height: 38px; flex-shrink: 0;
-  background: var(--s2); border: 1px solid var(--border);
-  border-radius: 8px; color: var(--text);
-  font-size: 20px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: border-color 0.15s; line-height: 1;
-}
-.step-btn:hover { border-color: var(--gold); }
-
-/* ── Toggle Ja/Nee ── */
-.toggle-group { display: flex; gap: 6px; }
-.toggle-btn {
-  flex: 1; padding: 9px 6px;
-  border: 1px solid var(--border); border-radius: 8px;
-  background: var(--s2); color: var(--muted);
-  font-family: var(--font); font-size: 14px;
-  cursor: pointer; transition: all 0.15s; text-align: center;
-}
-.toggle-btn.active-ja { background: rgba(45,212,160,0.1); border-color: var(--green); color: var(--green); }
-.toggle-btn.active-nee { background: rgba(224,92,92,0.1); border-color: var(--red); color: var(--red); }
-
-/* ── Submit ── */
-.submit-btn {
-  width: 100%; padding: 15px;
-  background: var(--gold); border: none; border-radius: var(--r);
-  color: #0a0c12; font-family: var(--font);
-  font-size: 15px; font-weight: 700;
-  cursor: pointer; transition: all 0.2s;
-  letter-spacing: 0.3px;
-}
-.submit-btn:hover { background: var(--gold2); transform: translateY(-1px); }
-.submit-btn:active { transform: translateY(0); }
-.submit-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
-.submit-btn.saved { background: var(--green); color: #0a0c12; }
-
-/* ── Login button ── */
-.login-btn {
-  width: 100%; padding: 15px; margin: 14px 0;
-  background: var(--gold); border: none; border-radius: var(--r);
-  color: #0a0c12; font-family: var(--font);
-  font-size: 15px; font-weight: 700; cursor: pointer;
-  display: none; align-items: center; justify-content: center; gap: 10px;
-  transition: all 0.2s;
-}
+/* Login */
+.login-btn { width: 100%; padding: 15px; margin: 14px 0; background: var(--gold); border: none; border-radius: var(--r); color: #0a0c12; font-family: var(--font); font-size: 15px; font-weight: 700; cursor: pointer; display: none; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; }
 .login-btn.show { display: flex; }
 .login-btn:hover { background: var(--gold2); }
 
-/* ── Config fields ── */
-.config-field { margin-bottom: 12px; }
-.config-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-.save-btn {
-  width: 100%; padding: 11px;
-  background: var(--gold); border: none; border-radius: 9px;
-  color: #0a0c12; font-family: var(--font);
-  font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 4px;
-  transition: background 0.15s;
-}
-.save-btn:hover { background: var(--gold2); }
+/* Welcome */
+.welcome-screen { text-align: center; padding: 60px 20px; }
+.welcome-screen .big-icon { font-size: 56px; margin-bottom: 20px; }
+.welcome-screen h2 { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+.welcome-screen p { color: var(--muted); font-size: 14px; line-height: 1.6; }
 
-/* ── Info text ── */
+/* Section label */
+.section-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Date section */
+.date-section { background: rgba(17,20,31,0.97); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; margin-bottom: 14px; position: sticky; top: 57px; z-index: 90; backdrop-filter: blur(16px); }
+.date-nav { display: flex; align-items: center; gap: 8px; }
+.date-nav select { flex: 1; }
+.nav-arrow { width: 36px; height: 36px; flex-shrink: 0; background: var(--s2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; line-height: 1; }
+.nav-arrow:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Form */
+.form-section { background: var(--s1); border: 1px solid var(--border); border-radius: var(--r); padding: 18px; margin-bottom: 12px; }
+.field { margin-bottom: 13px; }
+.field:last-child { margin-bottom: 0; }
+label { display: block; font-size: 12px; color: var(--label); margin-bottom: 6px; font-weight: 500; }
+input[type="text"], input[type="number"], textarea, select { width: 100%; background: var(--s2); border: 1px solid var(--border); border-radius: 9px; padding: 10px 13px; color: var(--text); font-family: var(--font); font-size: 15px; outline: none; transition: border-color 0.15s; -webkit-appearance: none; appearance: none; }
+input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+input::placeholder, textarea::placeholder { color: var(--muted); }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235c6480' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 34px; cursor: pointer; }
+select option { background: var(--s2); }
+textarea { resize: vertical; min-height: 80px; font-size: 14px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+/* Weight */
+.weight-wrap { display: flex; align-items: center; justify-content: center; padding: 8px 0; }
+.weight-input-big { font-size: 32px !important; font-family: var(--mono) !important; color: var(--gold) !important; text-align: center; width: 130px; border-color: transparent !important; background: transparent !important; padding: 6px !important; }
+.weight-input-big:focus { border-color: var(--gold) !important; background: var(--s2) !important; border-radius: 9px !important; }
+.weight-unit { font-family: var(--mono); font-size: 18px; color: var(--muted); margin-left: 4px; }
+
+/* Step */
+.step-row { display: flex; align-items: center; gap: 8px; }
+.step-row input { text-align: center; }
+.step-btn { width: 38px; height: 38px; flex-shrink: 0; background: var(--s2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s; line-height: 1; }
+.step-btn:hover { border-color: var(--gold); }
+
+/* Toggle */
+.toggle-group { display: flex; gap: 6px; }
+.toggle-btn { flex: 1; padding: 9px 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--s2); color: var(--muted); font-family: var(--font); font-size: 14px; cursor: pointer; transition: all 0.15s; text-align: center; }
+.toggle-btn.active-ja { background: rgba(45,212,160,0.1); border-color: var(--green); color: var(--green); }
+.toggle-btn.active-nee { background: rgba(224,92,92,0.1); border-color: var(--red); color: var(--red); }
+
+/* Submit */
+.submit-btn { width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: var(--r); color: #0a0c12; font-family: var(--font); font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.submit-btn:hover { background: var(--gold2); }
+.submit-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+.submit-btn.saved { background: var(--green); color: #0a0c12; }
+
+/* Fit sync */
+.fit-sync-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; border: 1px solid rgba(45,212,160,0.3); background: rgba(45,212,160,0.08); color: var(--green); font-family: var(--mono); font-size: 11px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.fit-sync-btn:hover { background: rgba(45,212,160,0.15); }
+.fit-sync-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Info */
 .info-text { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
 
-/* ── Spinner ── */
-.spinner {
-  width: 15px; height: 15px;
-  border: 2px solid rgba(10,12,18,0.3); border-top-color: #0a0c12;
-  border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block;
-}
+/* Sunday badge */
+.sunday-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(240,180,41,0.12); border: 1px solid rgba(240,180,41,0.3); color: var(--gold); font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; margin-bottom: 12px; }
+
+/* Spinner */
+.spinner { width: 15px; height: 15px; border: 2px solid rgba(10,12,18,0.3); border-top-color: #0a0c12; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Toast ── */
-.toast {
-  position: fixed; bottom: 20px; left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  background: var(--s2); border: 1px solid var(--border);
-  border-radius: 10px; padding: 11px 18px;
-  font-size: 13px; color: var(--text); z-index: 300;
-  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-  white-space: nowrap; display: flex; align-items: center; gap: 8px;
-  max-width: 90vw;
-}
+/* Toast */
+.toast { position: fixed; bottom: calc(var(--nav-h) + 10px); left: 50%; transform: translateX(-50%) translateY(80px); background: var(--s2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 18px; font-size: 13px; color: var(--text); z-index: 300; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; max-width: 90vw; }
 .toast.show { transform: translateX(-50%) translateY(0); }
 .toast.success { border-color: rgba(45,212,160,0.4); color: var(--green); }
 .toast.error { border-color: rgba(224,92,92,0.4); color: var(--red); }
 
-/* ── Empty state ── */
-.empty-state { text-align: center; padding: 16px; color: var(--muted); font-size: 13px; flex: 1; }
+/* Plan page */
+.plan-loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+.plan-macro-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 12px; }
+.plan-macro-card { background: var(--s2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 8px; text-align: center; }
+.plan-macro-value { font-family: var(--mono); font-size: 20px; color: var(--gold); font-weight: 500; }
+.plan-macro-label { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.plan-row { display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(37,43,61,0.5); font-size: 14px; align-items: start; }
+.plan-row:last-child { border-bottom: none; }
+.plan-label { color: var(--label); font-weight: 500; font-size: 13px; }
+.plan-value { color: var(--text); line-height: 1.5; font-size: 13px; }
+.plan-section-header { font-size: 12px; font-weight: 700; color: var(--gold); padding: 10px 0 6px; border-bottom: 1px solid var(--border); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* ── Sunday badge ── */
-.sunday-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(240,180,41,0.12); border: 1px solid rgba(240,180,41,0.3);
-  color: var(--gold); font-size: 11px; font-weight: 600;
-  padding: 3px 9px; border-radius: 20px; margin-bottom: 12px;
-  letter-spacing: 0.3px;
-}
+/* Weekvragen */
+.week-question { background: var(--s1); border: 1px solid var(--border); border-radius: var(--r); padding: 18px; margin-bottom: 12px; }
+.week-q-number { font-family: var(--mono); font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.week-q-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; line-height: 1.4; }
+.week-q-subtitle { font-size: 12px; color: var(--muted); margin-bottom: 10px; font-style: italic; }
+.weekvragen-header { background: var(--s1); border: 1px solid rgba(240,180,41,0.2); border-radius: var(--r); padding: 14px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+.weekvragen-header .icon { font-size: 28px; }
+.weekvragen-header h2 { font-size: 15px; font-weight: 700; }
+.weekvragen-header p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.not-sunday { text-align: center; padding: 60px 20px; color: var(--muted); }
+.not-sunday .icon { font-size: 48px; margin-bottom: 16px; }
+.not-sunday h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <span class="logo-mark">JB</span>
-    <span class="logo-text">Coaching</span>
-  </div>
+  <div class="logo"><span class="logo-mark">JB</span><span>Coaching</span></div>
   <div class="header-right">
-    <div class="status-pill" id="namePill" style="display:none">
-      <span id="namePillLabel"></span>
-    </div>
-    <button class="logout-btn" id="logoutBtn" onclick="logout()" style="display:none">Uitloggen</button>
+    <div class="name-pill" id="namePill"><span id="namePillLabel"></span></div>
+    <button class="logout-btn" id="logoutBtn" onclick="logout()">Uitloggen</button>
   </div>
 </header>
 
-<main>
+<div style="max-width:520px;margin:0 auto;padding:0 14px;">
+  <button class="login-btn" id="loginBtn" onclick="triggerLogin()">🔑 Inloggen met Google</button>
+</div>
 
-  <!-- Login button (shown when not authenticated) -->
-  <button class="login-btn" id="loginBtn" onclick="triggerLogin()">
-    🔑 Inloggen met Google
-  </button>
-
-  <!-- Welcome screen (shown when no sheet ID in URL) -->
+<!-- PAGE: Progressie -->
+<div class="page active" id="page-progressie">
   <div id="welcomeScreen" class="welcome-screen" style="display:none">
     <div class="big-icon">🔗</div>
     <h2>Geen deelnemer geselecteerd</h2>
-    <p>Open de link die je van je coach hebt ontvangen.<br><br>
-    Als je de coach bent, gebruik de link:<br>
-    <code style="background:var(--s2);padding:4px 8px;border-radius:6px;font-size:12px;margin-top:8px;display:inline-block;">
-      ?id=SPREADSHEET_ID
-    </code></p>
+    <p>Open de link die je van je coach hebt ontvangen.</p>
   </div>
 
-  <!-- Date picker (sticky) -->
-  <div class="date-section" id="dateSection" style="display:none">
-    <div class="section-label">Datum</div>
-    <div class="date-nav">
-      <button class="nav-arrow" onclick="stepDate(-1)">‹</button>
-      <select id="datePicker" onchange="onDatePickerChange()">
-        <option value="">— Kies een datum —</option>
-      </select>
-      <button class="nav-arrow" onclick="stepDate(1)">›</button>
+  <div id="dateSection" style="display:none">
+    <div class="date-section">
+      <div class="section-label">Datum</div>
+      <div class="date-nav">
+        <button class="nav-arrow" onclick="stepDate(-1)">‹</button>
+        <select id="datePicker" onchange="onDatePickerChange()"><option value="">— Kies een datum —</option></select>
+        <button class="nav-arrow" onclick="stepDate(1)">›</button>
+      </div>
+    </div>
+
+    <div id="formArea" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <button class="fit-sync-btn" onclick="syncFit()"><span id="fitSyncIcon">⚡</span> Sync Google Fit</button>
+        <div id="fitStatus" style="display:none;font-size:11px;color:var(--green);font-family:var(--mono);flex:1;"></div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">Gewicht</div>
+        <div class="weight-wrap">
+          <input type="text" id="gewicht" class="weight-input-big" placeholder="81,5" inputmode="decimal">
+          <span class="weight-unit">kg</span>
+        </div>
+        <p class="info-text" style="text-align:center">Nuchter gewicht · ochtend</p>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">Training & notities</div>
+        <div class="field">
+          <label>Minuten cardio</label>
+          <div class="step-row">
+            <button class="step-btn" onclick="stepField('cardio',-5)">−</button>
+            <input type="number" id="cardio" value="" min="0" inputmode="numeric">
+            <button class="step-btn" onclick="stepField('cardio',5)">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Bijzonderheden</label>
+          <textarea id="bijzonderheden" placeholder="Notities voor vandaag..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">Voeding</div>
+        <p class="info-text" id="doelTekst" style="margin-bottom:12px">Doelen laden...</p>
+        <div class="field">
+          <label>Dagelijkse kcal (berekend)</label>
+          <input type="text" id="kcal" placeholder="—" readonly style="background:var(--s3);color:var(--gold);font-family:var(--mono);font-size:16px;text-align:center;cursor:default;">
+        </div>
+        <div class="field-row">
+          <div class="field"><label>KHD (gram)</label><input type="number" id="khd" placeholder="181" inputmode="numeric"></div>
+          <div class="field"><label>Eiwitten (gram)</label><input type="number" id="eiwitten" placeholder="147" inputmode="numeric"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Vetten (gram)</label><input type="number" id="vetten" placeholder="65" inputmode="numeric"></div>
+          <div class="field"><label>Vezels (gram)</label><input type="number" id="vezels" placeholder="35" inputmode="numeric"></div>
+        </div>
+        <div class="field">
+          <label>Liter water</label>
+          <div class="step-row">
+            <button class="step-btn" onclick="stepField('water',-0.5)">−</button>
+            <input type="number" id="water" value="" step="0.5" min="0" inputmode="decimal">
+            <button class="step-btn" onclick="stepField('water',0.5)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">Supplementen ingenomen?</div>
+        <div class="field-row-3">
+          <div class="field"><label>Omega 3</label><div class="toggle-group"><button class="toggle-btn" onclick="toggleJaNee(this,'omega3')" data-field="omega3" data-val="Ja">Ja</button><button class="toggle-btn" onclick="toggleJaNee(this,'omega3')" data-field="omega3" data-val="Nee">Nee</button></div></div>
+          <div class="field"><label>Magnesium</label><div class="toggle-group"><button class="toggle-btn" onclick="toggleJaNee(this,'magn')" data-field="magn" data-val="Ja">Ja</button><button class="toggle-btn" onclick="toggleJaNee(this,'magn')" data-field="magn" data-val="Nee">Nee</button></div></div>
+          <div class="field"><label>Creatine</label><div class="toggle-group"><button class="toggle-btn" onclick="toggleJaNee(this,'creatine')" data-field="creatine" data-val="Ja">Ja</button><button class="toggle-btn" onclick="toggleJaNee(this,'creatine')" data-field="creatine" data-val="Nee">Nee</button></div></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">Gevoel & prestatie</div>
+        <div class="field-row">
+          <div class="field"><label>Ontlasting</label><select id="ontlasting"><option value=""></option><option>Normaal</option><option>Zacht</option><option>Dun</option><option>Hard</option><option>Geen</option></select></div>
+          <div class="field"><label>Kracht</label><select id="kracht"><option value=""></option><option>Normaal</option><option>Hoog</option><option>goed</option><option>matig</option><option>laag</option></select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Energie</label><select id="energie"><option value=""></option><option>goed</option><option>Hoog</option><option>matig</option><option>laag</option></select></div>
+          <div class="field"><label>Honger/trek</label><select id="honger"><option value=""></option><option>Niet</option><option>Een beejte</option><option>Veel</option><option>Extreem</option></select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Slaap (uren)</label><input type="text" id="slaap" placeholder="7:30"></div>
+          <div class="field"><label>Aantal stappen</label><input type="number" id="stappen" placeholder="8000" inputmode="numeric"></div>
+        </div>
+      </div>
+
+      <div class="form-section" id="metingenSection" style="display:none">
+        <div class="section-label">Wekelijkse metingen</div>
+        <div class="sunday-badge">📅 Zondag check-in</div>
+        <p class="info-text" style="margin-bottom:12px">Meet in centimeters met komma</p>
+        <div class="field-row">
+          <div class="field"><label>Buikomvang navel</label><input type="text" id="meting_navel" placeholder="80,0" inputmode="decimal"></div>
+          <div class="field"><label>Buikomvang heup</label><input type="text" id="meting_heup" placeholder="85,0" inputmode="decimal"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Arm links</label><input type="text" id="meting_arm" placeholder="39,0" inputmode="decimal"></div>
+          <div class="field"><label>Been links</label><input type="text" id="meting_been" placeholder="57,0" inputmode="decimal"></div>
+        </div>
+        <div class="field"><label>Borstomvang</label><input type="text" id="meting_borst" placeholder="103,0" inputmode="decimal"></div>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="submitForm()">✓ Opslaan in Google Sheets</button>
     </div>
   </div>
+</div>
 
-  <!-- Form area -->
-  <div id="formArea" style="display:none">
+<!-- PAGE: Plan/Voeding -->
+<div class="page" id="page-plan">
+  <div id="planContent"><div class="plan-loading">⏳ Plan laden...</div></div>
+</div>
 
-    <!-- Fit sync bar -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-      <button class="fit-sync-btn" onclick="syncFit()">
-        <span id="fitSyncIcon">⚡</span> Sync Google Fit
-      </button>
-      <div id="fitStatus" style="display:none;font-size:11px;color:var(--green);font-family:var(--mono);flex:1;"></div>
-    </div>
+<!-- PAGE: Weekvragen -->
+<div class="page" id="page-weekvragen">
+  <div id="weekvragenContent"><div class="plan-loading">⏳ Laden...</div></div>
+</div>
 
-  <!-- Gewicht -->
-    <div class="form-section">
-      <div class="section-label">Gewicht</div>
-      <div class="weight-wrap">
-        <input type="text" id="gewicht" class="weight-input-big" placeholder="81,5" inputmode="decimal" pattern="[0-9]*[,.]?[0-9]*">
-        <span class="weight-unit">kg</span>
-      </div>
-      <p class="info-text" style="text-align:center">Nuchter gewicht · ochtend</p>
-    </div>
-
-    <!-- Training -->
-    <div class="form-section">
-      <div class="section-label">Training & notities</div>
-      <div class="field">
-        <label>Minuten cardio</label>
-        <div class="step-row">
-          <button class="step-btn" onclick="stepField('cardio',-5)">−</button>
-          <input type="number" id="cardio" value="" min="0" max="300" inputmode="numeric">
-          <button class="step-btn" onclick="stepField('cardio',5)">+</button>
-        </div>
-      </div>
-      <div class="field">
-        <label>Bijzonderheden</label>
-        <textarea id="bijzonderheden" placeholder="Notities voor vandaag..."></textarea>
-      </div>
-    </div>
-
-    <!-- Voeding -->
-    <div class="form-section">
-      <div class="section-label">Voeding</div>
-      <p class="info-text" id="doelTekst" style="margin-bottom:12px">Doelen laden...</p>
-      <div class="field">
-        <label>Dagelijkse kcal (berekend)</label>
-        <input type="text" id="kcal" placeholder="—" readonly
-          style="background:var(--s3);color:var(--gold);font-family:var(--mono);font-size:16px;text-align:center;cursor:default;">
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>KHD (gram)</label>
-          <input type="number" id="khd" placeholder="181" inputmode="numeric">
-        </div>
-        <div class="field">
-          <label>Eiwitten (gram)</label>
-          <input type="number" id="eiwitten" placeholder="147" inputmode="numeric">
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Vetten (gram)</label>
-          <input type="number" id="vetten" placeholder="65" inputmode="numeric">
-        </div>
-        <div class="field">
-          <label>Vezels (gram)</label>
-          <input type="number" id="vezels" placeholder="35" inputmode="numeric">
-        </div>
-      </div>
-      <div class="field">
-        <label>Liter water</label>
-        <div class="step-row">
-          <button class="step-btn" onclick="stepField('water',-0.5)">−</button>
-          <input type="number" id="water" value="" step="0.5" min="0" max="10" inputmode="decimal">
-          <button class="step-btn" onclick="stepField('water',0.5)">+</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Supplementen -->
-    <div class="form-section">
-      <div class="section-label">Supplementen ingenomen?</div>
-      <div class="field-row-3">
-        <div class="field">
-          <label>Omega 3</label>
-          <div class="toggle-group">
-            <button class="toggle-btn" onclick="toggleJaNee(this,'omega3')" data-field="omega3" data-val="Ja">Ja</button>
-            <button class="toggle-btn" onclick="toggleJaNee(this,'omega3')" data-field="omega3" data-val="Nee">Nee</button>
-          </div>
-        </div>
-        <div class="field">
-          <label>Magnesium</label>
-          <div class="toggle-group">
-            <button class="toggle-btn" onclick="toggleJaNee(this,'magn')" data-field="magn" data-val="Ja">Ja</button>
-            <button class="toggle-btn" onclick="toggleJaNee(this,'magn')" data-field="magn" data-val="Nee">Nee</button>
-          </div>
-        </div>
-        <div class="field">
-          <label>Creatine</label>
-          <div class="toggle-group">
-            <button class="toggle-btn" onclick="toggleJaNee(this,'creatine')" data-field="creatine" data-val="Ja">Ja</button>
-            <button class="toggle-btn" onclick="toggleJaNee(this,'creatine')" data-field="creatine" data-val="Nee">Nee</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Gevoel -->
-    <div class="form-section">
-      <div class="section-label">Gevoel & prestatie</div>
-      <div class="field-row">
-        <div class="field">
-          <label>Ontlasting</label>
-          <select id="ontlasting">
-            <option value=""></option>
-            <option>Normaal</option>
-            <option>Zacht</option>
-            <option>Dun</option>
-            <option>Hard</option>
-            <option>Geen</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Kracht</label>
-          <select id="kracht">
-            <option value=""></option>
-            <option>Normaal</option>
-            <option>Hoog</option>
-            <option>goed</option>
-            <option>matig</option>
-            <option>laag</option>
-          </select>
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Energie</label>
-          <select id="energie">
-            <option value=""></option>
-            <option>goed</option>
-            <option>Hoog</option>
-            <option>matig</option>
-            <option>laag</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Honger/trek</label>
-          <select id="honger">
-            <option value=""></option>
-            <option>Niet</option>
-            <option>Een beejte</option>
-            <option>Veel</option>
-            <option>Extreem</option>
-          </select>
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Slaap (uren)</label>
-          <input type="text" id="slaap" placeholder="7:30" inputmode="text">
-        </div>
-        <div class="field">
-          <label>Aantal stappen</label>
-          <input type="number" id="stappen" placeholder="8000" inputmode="numeric">
-        </div>
-      </div>
-    </div>
-
-    <!-- Metingen (alleen zondag) -->
-    <div class="form-section" id="metingenSection" style="display:none">
-      <div class="section-label">Wekelijkse metingen</div>
-      <div class="sunday-badge">📅 Zondag check-in</div>
-      <p class="info-text" style="margin-bottom:12px">Meet in centimeters met komma</p>
-      <div class="field-row">
-        <div class="field">
-          <label>Buikomvang navel</label>
-          <input type="text" id="meting_navel" placeholder="80,0" inputmode="decimal">
-        </div>
-        <div class="field">
-          <label>Buikomvang heup</label>
-          <input type="text" id="meting_heup" placeholder="85,0" inputmode="decimal">
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Arm links</label>
-          <input type="text" id="meting_arm" placeholder="39,0" inputmode="decimal">
-        </div>
-        <div class="field">
-          <label>Been links</label>
-          <input type="text" id="meting_been" placeholder="57,0" inputmode="decimal">
-        </div>
-      </div>
-      <div class="field">
-        <label>Borstomvang</label>
-        <input type="text" id="meting_borst" placeholder="103,0" inputmode="decimal">
-      </div>
-    </div>
-
-    <button class="submit-btn" id="submitBtn" onclick="submitForm()">
-      ✓ Opslaan in Google Sheets
-    </button>
-
-  </div><!-- /formArea -->
-
-</main>
+<!-- Bottom Nav -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-tab active" id="tab-progressie" onclick="switchTab('progressie')">
+    <span class="icon">📊</span><span>Progressie</span>
+  </button>
+  <button class="nav-tab" id="tab-plan" onclick="switchTab('plan')">
+    <span class="icon">📋</span><span>Mijn plan</span>
+  </button>
+  <button class="nav-tab hidden" id="tab-weekvragen" onclick="switchTab('weekvragen')">
+    <span class="icon">❓</span><span>Weekvragen</span>
+  </button>
+</nav>
 
 <div class="toast" id="toast"><span id="toastMsg"></span></div>
 
 <script>
-// ═══════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════
-const state = {
-  sheetId: null,
-  sheetData: [],
-  selectedRow: null,
-  jaNeeValues: { omega3: '', magn: '', creatine: '' },
-  isSaved: false
-};
-
 const HARDCODED_CLIENT_ID = '790818364616-hlc4fop5k83ttoaqg19hf3f8j9o5c063.apps.googleusercontent.com';
 const PROGRESSIE_TAB = 'Progressie';
 const METINGEN_TAB   = 'Metingen';
+const PLAN_TAB       = 'Plan/voeding';
+const WEEKVRAGEN_TAB = 'Weekvragen';
 const TOKEN_KEY      = 'jb_token_v2';
-
-// ═══════════════════════════════════════════════
-// INIT — read ?id= from URL or localStorage (PWA)
-// ═══════════════════════════════════════════════
-function init() {
-  const params  = new URLSearchParams(window.location.search);
-  const urlId   = params.get('id');
-  const urlName = params.get('name');
-
-  // Save to localStorage when opened via full link
-  if (urlId) localStorage.setItem('jb_sheet_id', urlId);
-  if (urlName) localStorage.setItem('jb_participant_name', urlName);
-
-  // Use URL or fall back to localStorage (for PWA without URL params)
-  state.sheetId = urlId || localStorage.getItem('jb_sheet_id') || null;
-  const name = urlName
-    ? decodeURIComponent(urlName)
-    : (localStorage.getItem('jb_participant_name') || '');
-
-  if (name) document.title = 'JB Coaching · ' + name;
-
-  if (!state.sheetId) {
-    document.getElementById('welcomeScreen').style.display = 'block';
-    setStatus('Geen deelnemer', '');
-    return;
-  }
-
-  if (loadToken()) {
-    setStatus('Verbonden', 'connected');
-    const cachedEmail = localStorage.getItem('jb_user_email');
-    if (cachedEmail) setUserPill(cachedEmail);
-    fetchUserEmail(accessToken);
-    showDateSection();
-    loadDates();
-  } else {
-    loadGIS(HARDCODED_CLIENT_ID);
-  }
-}
-
-// ═══════════════════════════════════════════════
-// AUTH
-// ═══════════════════════════════════════════════
-let tokenClient = null;
-let accessToken = null;
-let tokenExpiry  = 0;
-
-function saveToken(token, expiresIn) {
-  accessToken  = token;
-  tokenExpiry  = Date.now() + (expiresIn - 60) * 1000;
-  localStorage.setItem(TOKEN_KEY, JSON.stringify({ token, expiry: tokenExpiry }));
-}
-
-function loadToken() {
-  try {
-    const t = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null');
-    if (t && t.expiry > Date.now()) {
-      accessToken = t.token; tokenExpiry = t.expiry; return true;
-    }
-  } catch(e) {}
-  return false;
-}
-
-function clearToken() {
-  accessToken = null; tokenExpiry = 0;
-  localStorage.removeItem(TOKEN_KEY);
-}
-
-function loadGIS(clientId) {
-  setStatus('Laden...', '');
-  if (window.google?.accounts?.oauth2) { setupTokenClient(clientId); return; }
-  const s = document.createElement('script');
-  s.src = 'https://accounts.google.com/gsi/client';
-  s.onload = () => setupTokenClient(clientId);
-  s.onerror = () => {
-    setStatus('Script fout', 'error');
-    showToast('❌ Google script kon niet laden. Herlaad de pagina.', 'error');
-    showLoginBtn();
-  };
-  document.head.appendChild(s);
-}
-
 const FIT_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/userinfo.email',
@@ -706,781 +337,443 @@ const FIT_SCOPES = [
   'https://www.googleapis.com/auth/fitness.body.read',
 ].join(' ');
 
-function setupTokenClient(clientId) {
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: clientId,
-    scope: FIT_SCOPES,
-    callback: async (resp) => {
-      if (resp.error) { setStatus('Auth mislukt', 'error'); showLoginBtn(); return; }
-      saveToken(resp.access_token, resp.expires_in || 3600);
-      hideLoginBtn();
-      setStatus('Verbonden', 'connected');
-      fetchUserEmail(resp.access_token);
-      showDateSection();
-      loadDates();
-    }
-  });
-  showLoginBtn();
+const state = {
+  sheetId: null, sheetData: [], selectedRow: null,
+  jaNeeValues: { omega3:'', magn:'', creatine:'' },
+  isSaved: true, doelen: {},
+  planLoaded: false, weekvragenLoaded: false,
+  currentTab: 'progressie'
+};
+
+// ── Tab navigation ──────────────────────────────
+function switchTab(tab) {
+  if (state.currentTab === 'progressie' && !state.isSaved && state.selectedRow) {
+    if (!confirm('Niet-opgeslagen wijzigingen. Toch wisselen?')) return;
+  }
+  state.currentTab = tab;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'plan' && !state.planLoaded) loadPlan();
+  if (tab === 'weekvragen' && !state.weekvragenLoaded) loadWeekvragen();
 }
 
-async function fetchUserEmail(token) {
-  try {
-    const res  = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    if (data.email) {
-      localStorage.setItem('jb_user_email', data.email);
-      setUserPill(data.email);
-    }
-  } catch(e) { console.error('fetchUserEmail:', e); }
+function isSundayToday() { return new Date().getDay() === 0; }
+
+function setupNav() {
+  document.getElementById('bottomNav').classList.add('visible');
+  if (isSundayToday()) document.getElementById('tab-weekvragen').classList.remove('hidden');
 }
 
-function triggerLogin() {
-  if (!tokenClient) { showToast('Even geduld...', ''); setTimeout(triggerLogin, 400); return; }
-  tokenClient.requestAccessToken({ prompt: 'select_account' });
-}
-
-function showLoginBtn() {
-  const b = document.getElementById('loginBtn');
-  b.classList.add('show');
-  setStatus('Klik om in te loggen', 'error');
-}
-function hideLoginBtn() {
-  document.getElementById('loginBtn').classList.remove('show');
-}
-
-function ensureAuth(cb) {
-  if (accessToken && tokenExpiry > Date.now()) { cb(); return; }
-  clearToken();
-  if (tokenClient) {
-    const prev = tokenClient.callback;
-    tokenClient.callback = (r) => { prev(r); if (!r.error) cb(); };
-    triggerLogin();
+// ── Init ────────────────────────────────────────
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  const urlId  = params.get('id'), urlName = params.get('name');
+  if (urlId)   localStorage.setItem('jb_sheet_id', urlId);
+  if (urlName) localStorage.setItem('jb_participant_name', urlName);
+  state.sheetId = urlId || localStorage.getItem('jb_sheet_id') || null;
+  const name = urlName ? decodeURIComponent(urlName) : (localStorage.getItem('jb_participant_name') || '');
+  if (name) document.title = 'JB Coaching · ' + name;
+  if (!state.sheetId) { document.getElementById('welcomeScreen').style.display = 'block'; return; }
+  if (loadToken()) {
+    const email = localStorage.getItem('jb_user_email');
+    if (email) setUserPill(email);
+    fetchUserEmail(accessToken);
+    onAuthenticated();
   } else {
     loadGIS(HARDCODED_CLIENT_ID);
   }
 }
 
-// ═══════════════════════════════════════════════
-// UI HELPERS
-// ═══════════════════════════════════════════════
-function setStatus(text, type) {
-  const pill = document.getElementById('statusPill');
-  if (pill) {
-    pill.className = 'status-pill ' + (type || '');
-    const span = document.getElementById('statusText');
-    if (span) span.textContent = text;
-  }
-}
-
-// ─── Load goals from sheet row 2 ─────────────────────────
-async function loadDoelen() {
-  if (!accessToken || !state.sheetId) return;
-  try {
-    const range = encodeURIComponent(`${PROGRESSIE_TAB}!G2:K2`);
-    const res   = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    const data = await res.json();
-    const row  = data.values?.[0] || [];
-    // G2=kcal, H2=khd, I2=eiwitten, J2=vetten, K2=vezels
-    const kcal    = row[0] || '—';
-    const khd     = row[1] || '—';
-    const eiwit   = row[2] || '—';
-    const vet     = row[3] || '—';
-    const vezels  = row[4] || '—';
-    const el = document.getElementById('doelTekst');
-    if (el) el.textContent = `Doelen: ${kcal} kcal · ${khd}g KHD · ${eiwit}g Eiwit · ${vet}g Vet · ${vezels}g Vezels`;
-    // Store for reference
-    state.doelen = { kcal, khd, eiwit, vet, vezels };
-  } catch(e) {
-    console.error('loadDoelen:', e);
-  }
-}
-
-function showDateSection() {
+function onAuthenticated() {
+  setupNav();
   document.getElementById('dateSection').style.display = 'block';
   document.getElementById('welcomeScreen').style.display = 'none';
+  loadDates();
+  loadDoelen();
+}
+
+// ── Auth ────────────────────────────────────────
+let tokenClient = null, accessToken = null, tokenExpiry = 0;
+
+function saveToken(t, exp) { accessToken = t; tokenExpiry = Date.now() + (exp-60)*1000; localStorage.setItem(TOKEN_KEY, JSON.stringify({token:t,expiry:tokenExpiry})); }
+function loadToken() { try { const t = JSON.parse(localStorage.getItem(TOKEN_KEY)||'null'); if (t && t.expiry > Date.now()) { accessToken = t.token; tokenExpiry = t.expiry; return true; } } catch(e) {} return false; }
+function clearToken() { accessToken = null; tokenExpiry = 0; localStorage.removeItem(TOKEN_KEY); }
+
+function loadGIS(clientId) {
+  if (window.google?.accounts?.oauth2) { setupTokenClient(clientId); return; }
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = () => setupTokenClient(clientId);
+  s.onerror = () => { showToast('❌ Google script fout — herlaad de pagina', 'error'); showLoginBtn(); };
+  document.head.appendChild(s);
+}
+
+function setupTokenClient(clientId) {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: clientId, scope: FIT_SCOPES,
+    callback: async (resp) => {
+      if (resp.error) { showLoginBtn(); return; }
+      saveToken(resp.access_token, resp.expires_in||3600);
+      hideLoginBtn(); fetchUserEmail(resp.access_token); onAuthenticated();
+    }
+  });
+  showLoginBtn();
+}
+
+function triggerLogin() { if (!tokenClient) { setTimeout(triggerLogin, 300); return; } tokenClient.requestAccessToken({ prompt: 'select_account' }); }
+function showLoginBtn() { document.getElementById('loginBtn').classList.add('show'); }
+function hideLoginBtn() { document.getElementById('loginBtn').classList.remove('show'); }
+function ensureAuth(cb) { if (accessToken && tokenExpiry > Date.now()) { cb(); return; } clearToken(); if (tokenClient) { const p = tokenClient.callback; tokenClient.callback = (r) => { p(r); if (!r.error) cb(); }; triggerLogin(); } else showLoginBtn(); }
+
+async function fetchUserEmail(token) {
+  try { const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {headers:{Authorization:`Bearer ${token}`}}); const d = await r.json(); if (d.email) { localStorage.setItem('jb_user_email', d.email); setUserPill(d.email); } } catch(e) {}
+}
+
+// ── UI helpers ──────────────────────────────────
+function setUserPill(email) {
+  const p = document.getElementById('namePill'), l = document.getElementById('namePillLabel'), b = document.getElementById('logoutBtn');
+  if (email) { l.textContent = email.split('@')[0]; p.style.display = 'flex'; b.style.display = 'block'; }
+  else { p.style.display = 'none'; b.style.display = 'none'; }
+}
+
+function logout() {
+  clearToken(); localStorage.removeItem('jb_user_email');
+  try { google.accounts.oauth2.revoke(accessToken, ()=>{}); } catch(e) {}
+  accessToken = null; setUserPill(null); showLoginBtn();
+  document.getElementById('dateSection').style.display = 'none';
+  document.getElementById('bottomNav').classList.remove('visible');
 }
 
 function showToast(msg, type) {
   const t = document.getElementById('toast');
   document.getElementById('toastMsg').textContent = msg;
-  t.className = 'toast ' + (type || '');
-  t.classList.add('show');
+  t.className = 'toast ' + (type||''); t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), type === 'error' ? 6000 : 3000);
 }
 
-function setUserPill(email) {
-  const namePill  = document.getElementById('namePill');
-  const nameLabel = document.getElementById('namePillLabel');
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (email) {
-    nameLabel.textContent = email.split('@')[0];
-    namePill.style.display  = 'flex';
-    logoutBtn.style.display = 'block';
-  } else {
-    namePill.style.display  = 'none';
-    logoutBtn.style.display = 'none';
-  }
-}
-
-function logout() {
-  clearToken();
-  localStorage.removeItem('jb_user_email');
-  try { google.accounts.oauth2.revoke(accessToken, () => {}); } catch(e) {}
-  accessToken = null;
-  setUserPill(null);
-  setStatus('Uitgelogd', '');
-  showLoginBtn();
-  document.getElementById('formArea').style.display = 'none';
-  document.getElementById('dateSection').style.display = 'none';
-}
-
-// ═══════════════════════════════════════════════
-// LOAD DATES
-// ═══════════════════════════════════════════════
+// ── Load dates ──────────────────────────────────
 async function loadDates() {
   if (!accessToken) { ensureAuth(loadDates); return; }
-  setStatus('Laden...', '');
-
-  const range = encodeURIComponent(`${PROGRESSIE_TAB}!A3:X300`);
-  const url   = `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`;
-
   try {
-    const res  = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const range = encodeURIComponent(`${PROGRESSIE_TAB}!A3:X300`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`, {headers:{Authorization:`Bearer ${accessToken}`}});
     const data = await res.json();
-
-    if (data.error) {
-      const c = data.error.code;
-      if (c === 401) { clearToken(); showLoginBtn(); throw new Error('Sessie verlopen — log opnieuw in'); }
-      if (c === 403) throw new Error('Geen toegang tot sheet (403)');
-      if (c === 404) throw new Error('Sheet niet gevonden (404) — controleer link');
-      throw new Error(`Fout ${c}: ${data.error.message}`);
-    }
-
+    if (data.error) { const c = data.error.code; if(c===401){clearToken();showLoginBtn();} throw new Error(`Fout ${c}: ${data.error.message}`); }
     state.sheetData = data.values || [];
-    renderDatePicker();
-    autoSelectToday();
-    setStatus('Verbonden', 'connected');
-    loadDoelen();
-  } catch(e) {
-    setStatus('Fout bij laden', 'error');
-    showToast('❌ ' + e.message, 'error');
-  }
+    renderDatePicker(); autoSelectToday();
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
-// ═══════════════════════════════════════════════
-// DATE PICKER
-// ═══════════════════════════════════════════════
+async function loadDoelen() {
+  if (!accessToken) return;
+  try {
+    const range = encodeURIComponent(`${PROGRESSIE_TAB}!G2:K2`);
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`, {headers:{Authorization:`Bearer ${accessToken}`}});
+    const data = await res.json(); const row = data.values?.[0]||[];
+    const [kcal,khd,eiwit,vet,vezels] = [row[0]||'—',row[1]||'—',row[2]||'—',row[3]||'—',row[4]||'—'];
+    const el = document.getElementById('doelTekst');
+    if (el) el.textContent = `Doelen: ${kcal} kcal · ${khd}g KHD · ${eiwit}g Eiwit · ${vet}g Vet · ${vezels}g Vezels`;
+    state.doelen = {kcal,khd,eiwit,vet,vezels};
+  } catch(e) {}
+}
+
+// ── Date picker ─────────────────────────────────
 function renderDatePicker() {
   const picker = document.getElementById('datePicker');
   picker.innerHTML = '<option value="">— Kies een datum —</option>';
-
-  state.sheetData.forEach((row, idx) => {
-    const datum = (row[1] || '').trim();
-    if (!datum) return;
-    const dag     = (row[2] || '').trim();
-    const gewicht = (row[5] || '').trim();
-    const filled  = gewicht !== '';
-    const opt     = document.createElement('option');
-    opt.value     = idx;
-    opt.textContent = filled ? `✓  ${datum} (${dag})` : `${datum} (${dag})`;
+  state.sheetData.forEach((row,idx) => {
+    const datum = (row[1]||'').trim(); if (!datum) return;
+    const dag = (row[2]||'').trim(), filled = (row[5]||'').trim() !== '';
+    const opt = document.createElement('option');
+    opt.value = idx; opt.textContent = filled ? `✓  ${datum} (${dag})` : `${datum} (${dag})`;
     if (filled) opt.style.color = 'var(--green)';
     picker.appendChild(opt);
   });
 }
 
 function autoSelectToday() {
-  const now  = new Date();
-  const d    = String(now.getDate()).padStart(2,'0');
-  const mNL  = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
-  const m    = mNL[now.getMonth()];
-  const y    = String(now.getFullYear()).slice(-2);
-  const today = `${d}/${m}/${y}`;
-
+  const now = new Date(), mNL = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+  const today = `${String(now.getDate()).padStart(2,'0')}/${mNL[now.getMonth()]}/${String(now.getFullYear()).slice(-2)}`;
   const idx = state.sheetData.findIndex(r => (r[1]||'').trim() === today);
-  if (idx !== -1) {
-    document.getElementById('datePicker').value = idx;
-    const row = state.sheetData[idx];
-    selectDate(idx, (row[1]||'').trim(), (row[2]||'').trim());
-  }
+  if (idx !== -1) { document.getElementById('datePicker').value = idx; const r = state.sheetData[idx]; selectDate(idx,(r[1]||'').trim(),(r[2]||'').trim()); }
 }
 
 function onDatePickerChange() {
-  const picker = document.getElementById('datePicker');
-  const idx    = picker.value;
-
-  // Warn if unsaved changes
+  const picker = document.getElementById('datePicker'), idx = picker.value;
   if (!state.isSaved && state.selectedRow && idx !== '' && parseInt(idx) !== state.selectedRow.rowIndex) {
-    if (!confirm('Je hebt niet-opgeslagen wijzigingen. Wil je toch van datum wisselen?')) {
-      // Revert picker to current date
-      picker.value = state.selectedRow.rowIndex;
-      return;
-    }
+    if (!confirm('Niet-opgeslagen wijzigingen. Toch wisselen?')) { picker.value = state.selectedRow.rowIndex; return; }
   }
-
   if (idx === '') { document.getElementById('formArea').style.display = 'none'; return; }
-  const row = state.sheetData[parseInt(idx)] || [];
-  selectDate(parseInt(idx), (row[1]||'').trim(), (row[2]||'').trim());
+  const row = state.sheetData[parseInt(idx)]||[];
+  selectDate(parseInt(idx),(row[1]||'').trim(),(row[2]||'').trim());
 }
 
 function stepDate(dir) {
   const picker = document.getElementById('datePicker');
-  const opts   = Array.from(picker.options).filter(o => o.value !== '');
+  const opts = Array.from(picker.options).filter(o => o.value !== '');
   if (!opts.length) return;
-  const cur  = opts.findIndex(o => o.value === picker.value);
-  const next = Math.max(0, Math.min(opts.length - 1, cur + dir));
-
-  // Warn if unsaved changes
-  if (!state.isSaved && state.selectedRow && opts[next].value !== picker.value) {
-    if (!confirm('Je hebt niet-opgeslagen wijzigingen. Wil je toch van datum wisselen?')) return;
-  }
-
-  picker.value = opts[next].value;
-  onDatePickerChange();
+  const cur = opts.findIndex(o => o.value === picker.value);
+  const next = Math.max(0, Math.min(opts.length-1, cur+dir));
+  if (!state.isSaved && state.selectedRow && opts[next].value !== picker.value) { if (!confirm('Niet-opgeslagen wijzigingen. Toch wisselen?')) return; }
+  picker.value = opts[next].value; onDatePickerChange();
 }
 
-// ═══════════════════════════════════════════════
-// SELECT DATE & PREFILL
-// ═══════════════════════════════════════════════
+// ── Select date ─────────────────────────────────
 function selectDate(rowIndex, datum, dag) {
-  state.selectedRow = { rowIndex, datum, dag };
-  state.isSaved     = true; // treat fresh load as saved until user edits
-
+  state.selectedRow = {rowIndex,datum,dag}; state.isSaved = true;
   resetForm();
-
-  const row = state.sheetData[rowIndex] || [];
-
-  const setVal = (id, val) => {
-    if (val === undefined || val === null || val === '') return;
-    const el = document.getElementById(id);
-    if (el) el.value = val;
-  };
-  const setNum = (id, val) => {
-    if (!val && val !== 0) return;
-    const el = document.getElementById(id);
-    if (el) el.value = val.toString().replace(',', '.');
-  };
-  const setTxt = (id, val) => {
-    if (!val) return;
-    const el = document.getElementById(id);
-    if (el) el.value = val; // keep original (comma) for text fields
-  };
-  const setSelect = (id, val) => {
-    if (!val) return;
-    const el = document.getElementById(id);
-    if (!el) return;
-    const opt = Array.from(el.options).find(o => o.text.toLowerCase() === val.toString().toLowerCase());
-    if (opt) el.value = opt.value;
-  };
-  const setToggle = (field, val) => {
-    if (!val) return;
-    document.querySelectorAll(`[data-field="${field}"]`).forEach(b => b.className = 'toggle-btn');
-    const t = Array.from(document.querySelectorAll(`[data-field="${field}"]`)).find(b => b.dataset.val === val);
-    if (t) { state.jaNeeValues[field] = val; t.classList.add(val === 'Ja' ? 'active-ja' : 'active-nee'); }
-  };
-
-  // B=1 datum C=2 dag D=3 cardio E=4 bijz F=5 gewicht G=6 kcal(calc)
-  // H=7 KHD I=8 eiwit J=9 vet K=10 vezels L=11 water
-  // M=12 omega3 N=13 magn O=14 creatine P=15 ontlasting Q=16 kracht
-  // R=17 energie S=18 honger T=19 slaap U=20 stappen V=21 verwachting
-  setVal('cardio',         row[3]);
-  setVal('bijzonderheden', row[4]);
-  setTxt('gewicht',        row[5]);
-  // G=6 kcal (read-only display)
-  const kcalEl = document.getElementById('kcal');
-  if (kcalEl) kcalEl.value = row[6] ? row[6] + ' kcal' : '—';
-  setNum('khd',            row[7]);
-  setNum('eiwitten',       row[8]);
-  setNum('vetten',         row[9]);
-  setNum('vezels',         row[10]);
-  setNum('water',          row[11]);
-  setToggle('omega3',      row[12]);
-  setToggle('magn',        row[13]);
-  setToggle('creatine',    row[14]);
-  setSelect('ontlasting',  row[15]);
-  setSelect('kracht',      row[16]);
-  setSelect('energie',     row[17]);
-  setSelect('honger',      row[18]);
-  setVal('slaap',          row[19]);
-  setVal('stappen',        row[20]);
-
-  // Sunday: show metingen section
+  const row = state.sheetData[rowIndex]||[];
+  const setVal = (id,val) => { if (val!==undefined&&val!==null&&val!=='') { const el=document.getElementById(id); if(el) el.value=val; } };
+  const setNum = (id,val) => { if (!val&&val!==0) return; const el=document.getElementById(id); if(el) el.value=val.toString().replace(',','.'); };
+  const setTxt = (id,val) => { if (!val) return; const el=document.getElementById(id); if(el) el.value=val; };
+  const setSelect = (id,val) => { if (!val) return; const el=document.getElementById(id); if(!el) return; const opt=Array.from(el.options).find(o=>o.text.toLowerCase()===val.toString().toLowerCase()); if(opt) el.value=opt.value; };
+  const setToggle = (field,val) => { if (!val) return; document.querySelectorAll(`[data-field="${field}"]`).forEach(b=>b.className='toggle-btn'); const t=Array.from(document.querySelectorAll(`[data-field="${field}"]`)).find(b=>b.dataset.val===val); if(t){state.jaNeeValues[field]=val;t.classList.add(val==='Ja'?'active-ja':'active-nee');} };
+  setVal('cardio',row[3]); setVal('bijzonderheden',row[4]); setTxt('gewicht',row[5]);
+  const kcalEl = document.getElementById('kcal'); if(kcalEl) kcalEl.value = row[6] ? row[6]+' kcal' : '—';
+  setNum('khd',row[7]); setNum('eiwitten',row[8]); setNum('vetten',row[9]); setNum('vezels',row[10]); setNum('water',row[11]);
+  setToggle('omega3',row[12]); setToggle('magn',row[13]); setToggle('creatine',row[14]);
+  setSelect('ontlasting',row[15]); setSelect('kracht',row[16]); setSelect('energie',row[17]); setSelect('honger',row[18]);
+  setVal('slaap',row[19]); setVal('stappen',row[20]);
   const sunday = dag.toLowerCase() === 'zo';
   document.getElementById('metingenSection').style.display = sunday ? 'block' : 'none';
   if (sunday) loadMetingen(datum);
-
-  // Show form
-  const formArea = document.getElementById('formArea');
-  formArea.style.display = 'block';
-
-  // Reset submit button
+  document.getElementById('formArea').style.display = 'block';
   const btn = document.getElementById('submitBtn');
-  btn.innerHTML = '✓ Opslaan in Google Sheets';
-  btn.classList.remove('saved');
-  btn.style.background = '';
-  btn.style.color = '';
-
-  // Detect changes
-  formArea.oninput  = markDirty;
-  formArea.onchange = markDirty;
+  btn.innerHTML = '✓ Opslaan in Google Sheets'; btn.classList.remove('saved'); btn.style.background=''; btn.style.color='';
+  const fa = document.getElementById('formArea'); fa.oninput = markDirty; fa.onchange = markDirty;
 }
 
 function resetForm() {
-  ['cardio','bijzonderheden','gewicht','khd','eiwitten','vetten','vezels','water','slaap','stappen'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  ['ontlasting','kracht','energie','honger'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.selectedIndex = 0;
-  });
-  ['omega3','magn','creatine'].forEach(f => {
-    state.jaNeeValues[f] = '';
-    document.querySelectorAll(`[data-field="${f}"]`).forEach(b => b.className = 'toggle-btn');
-  });
-  ['meting_navel','meting_heup','meting_arm','meting_been','meting_borst'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
+  ['cardio','bijzonderheden','gewicht','khd','eiwitten','vetten','vezels','water','slaap','stappen'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['ontlasting','kracht','energie','honger'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
+  ['omega3','magn','creatine'].forEach(f=>{state.jaNeeValues[f]='';document.querySelectorAll(`[data-field="${f}"]`).forEach(b=>b.className='toggle-btn');});
+  ['meting_navel','meting_heup','meting_arm','meting_been','meting_borst'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 }
 
-// ═══════════════════════════════════════════════
-// DIRTY STATE
-// ═══════════════════════════════════════════════
 function markDirty() {
-  if (!state.isSaved) return;
-  state.isSaved = false;
-  const btn = document.getElementById('submitBtn');
-  btn.innerHTML = '✓ Opslaan in Google Sheets';
-  btn.classList.remove('saved');
-  btn.style.background = '';
-  btn.style.color = '';
+  if (!state.isSaved) return; state.isSaved=false;
+  const btn=document.getElementById('submitBtn');
+  btn.innerHTML='✓ Opslaan in Google Sheets'; btn.classList.remove('saved'); btn.style.background=''; btn.style.color='';
 }
 
-// ═══════════════════════════════════════════════
-// TOGGLE / STEP
-// ═══════════════════════════════════════════════
-function toggleJaNee(btn, field) {
-  btn.closest('.toggle-group').querySelectorAll('.toggle-btn').forEach(b => b.className = 'toggle-btn');
-  state.jaNeeValues[field] = btn.dataset.val;
-  btn.classList.add(btn.dataset.val === 'Ja' ? 'active-ja' : 'active-nee');
-  markDirty();
+function toggleJaNee(btn,field) {
+  btn.closest('.toggle-group').querySelectorAll('.toggle-btn').forEach(b=>b.className='toggle-btn');
+  state.jaNeeValues[field]=btn.dataset.val; btn.classList.add(btn.dataset.val==='Ja'?'active-ja':'active-nee'); markDirty();
 }
 
-function stepField(id, delta) {
-  const el  = document.getElementById(id);
-  const val = parseFloat(el.value) || 0;
-  el.value  = Math.max(0, +(val + delta).toFixed(1));
-  markDirty();
-}
+function stepField(id,delta) { const el=document.getElementById(id); el.value=Math.max(0,+(parseFloat(el.value||0)+delta).toFixed(1)); markDirty(); }
 
-// ═══════════════════════════════════════════════
-// SUBMIT
-// ═══════════════════════════════════════════════
+// ── Submit progressie ───────────────────────────
 async function submitForm() {
-  if (!state.selectedRow) return;
-  if (!accessToken) { ensureAuth(submitForm); return; }
-
-  const btn = document.getElementById('submitBtn');
-  btn.disabled  = true;
-  btn.innerHTML = '<span class="spinner"></span> Opslaan...';
-
-  const rowNum  = state.selectedRow.rowIndex + 3;
-  const sheet   = PROGRESSIE_TAB;
-  const gewicht = (document.getElementById('gewicht').value || '').replace('.', ',');
-
-  const updates = [
-    { range: `${sheet}!D${rowNum}`, values: [[v('cardio')]] },
-    { range: `${sheet}!E${rowNum}`, values: [[v('bijzonderheden')]] },
-    { range: `${sheet}!F${rowNum}`, values: [[gewicht]] },
-    { range: `${sheet}!H${rowNum}`, values: [[v('khd')]] },
-    { range: `${sheet}!I${rowNum}`, values: [[v('eiwitten')]] },
-    { range: `${sheet}!J${rowNum}`, values: [[v('vetten')]] },
-    { range: `${sheet}!K${rowNum}`, values: [[v('vezels')]] },
-    { range: `${sheet}!L${rowNum}`, values: [[v('water')]] },
-    { range: `${sheet}!M${rowNum}`, values: [[state.jaNeeValues.omega3]] },
-    { range: `${sheet}!N${rowNum}`, values: [[state.jaNeeValues.magn]] },
-    { range: `${sheet}!O${rowNum}`, values: [[state.jaNeeValues.creatine]] },
-    { range: `${sheet}!P${rowNum}`, values: [[sv('ontlasting')]] },
-    { range: `${sheet}!Q${rowNum}`, values: [[sv('kracht')]] },
-    { range: `${sheet}!R${rowNum}`, values: [[sv('energie')]] },
-    { range: `${sheet}!S${rowNum}`, values: [[sv('honger')]] },
-    { range: `${sheet}!T${rowNum}`, values: [[v('slaap')]] },
-    { range: `${sheet}!U${rowNum}`, values: [[v('stappen')]] },
+  if (!state.selectedRow||!accessToken) return;
+  const btn=document.getElementById('submitBtn'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Opslaan...';
+  const rowNum=state.selectedRow.rowIndex+3, sheet=PROGRESSIE_TAB;
+  const gewicht=(document.getElementById('gewicht').value||'').replace('.',',');
+  const updates=[
+    {range:`${sheet}!D${rowNum}`,values:[[v('cardio')]]},{range:`${sheet}!E${rowNum}`,values:[[v('bijzonderheden')]]},
+    {range:`${sheet}!F${rowNum}`,values:[[gewicht]]},{range:`${sheet}!H${rowNum}`,values:[[v('khd')]]},
+    {range:`${sheet}!I${rowNum}`,values:[[v('eiwitten')]]},{range:`${sheet}!J${rowNum}`,values:[[v('vetten')]]},
+    {range:`${sheet}!K${rowNum}`,values:[[v('vezels')]]},{range:`${sheet}!L${rowNum}`,values:[[v('water')]]},
+    {range:`${sheet}!M${rowNum}`,values:[[state.jaNeeValues.omega3]]},{range:`${sheet}!N${rowNum}`,values:[[state.jaNeeValues.magn]]},
+    {range:`${sheet}!O${rowNum}`,values:[[state.jaNeeValues.creatine]]},{range:`${sheet}!P${rowNum}`,values:[[sv('ontlasting')]]},
+    {range:`${sheet}!Q${rowNum}`,values:[[sv('kracht')]]},{range:`${sheet}!R${rowNum}`,values:[[sv('energie')]]},
+    {range:`${sheet}!S${rowNum}`,values:[[sv('honger')]]},{range:`${sheet}!T${rowNum}`,values:[[v('slaap')]]},
+    {range:`${sheet}!U${rowNum}`,values:[[v('stappen')]]},
   ];
-
   try {
-    const res  = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values:batchUpdate`,
-      {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data: updates })
-      }
-    );
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-
-    // Sunday: also save metingen
-    if (state.selectedRow.dag.toLowerCase() === 'zo') {
-      await submitMetingen();
-    }
-
-    // Update in-memory filled marker
-    const row = state.sheetData[state.selectedRow.rowIndex] || [];
-    row[5] = gewicht;
-    renderDatePicker();
-    document.getElementById('datePicker').value = state.selectedRow.rowIndex;
-
-    // Green saved button
-    state.isSaved = true;
-    btn.innerHTML = '✓ Opgeslagen!';
-    btn.classList.add('saved');
-
-  } catch(e) {
-    showToast('❌ ' + e.message, 'error');
-  } finally {
-    btn.disabled = false;
-  }
+    const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values:batchUpdate`,{method:'POST',headers:{'Authorization':`Bearer ${accessToken}`,'Content-Type':'application/json'},body:JSON.stringify({valueInputOption:'USER_ENTERED',data:updates})});
+    const data=await res.json(); if(data.error) throw new Error(data.error.message);
+    if (state.selectedRow.dag.toLowerCase()==='zo') await submitMetingen();
+    const row=state.sheetData[state.selectedRow.rowIndex]||[]; row[5]=gewicht;
+    renderDatePicker(); document.getElementById('datePicker').value=state.selectedRow.rowIndex;
+    state.isSaved=true; btn.innerHTML='✓ Opgeslagen!'; btn.classList.add('saved');
+  } catch(e) { showToast('❌ '+e.message,'error'); } finally { btn.disabled=false; }
 }
 
-// ═══════════════════════════════════════════════
-// METINGEN
-// ═══════════════════════════════════════════════
+// ── Metingen ────────────────────────────────────
 async function loadMetingen(datum) {
   if (!accessToken) return;
   try {
-    const range = encodeURIComponent(`${METINGEN_TAB}!B2:H100`);
-    const res   = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    const data = await res.json();
-    if (data.error || !data.values) return;
-
-    const row = data.values.find(r => datumMatch(datum, (r[0]||'').toString()));
-    if (!row) return;
-
-    ['meting_navel','meting_heup','meting_arm','meting_been','meting_borst'].forEach((id, i) => {
-      if (row[i+2]) document.getElementById(id).value = row[i+2];
-    });
-  } catch(e) { console.error('loadMetingen:', e); }
+    const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${encodeURIComponent(`${METINGEN_TAB}!B2:H100`)}`,{headers:{Authorization:`Bearer ${accessToken}`}});
+    const data=await res.json(); if(data.error||!data.values) return;
+    const row=data.values.find(r=>datumMatch(datum,(r[0]||'').toString()));
+    if(!row) return;
+    ['meting_navel','meting_heup','meting_arm','meting_been','meting_borst'].forEach((id,i)=>{if(row[i+2])document.getElementById(id).value=row[i+2];});
+  } catch(e) {}
 }
 
 async function submitMetingen() {
-  const vals = ['meting_navel','meting_heup','meting_arm','meting_been','meting_borst'].map(id => document.getElementById(id).value);
-  if (vals.every(v => !v)) return;
-
+  const vals=['meting_navel','meting_heup','meting_arm','meting_been','meting_borst'].map(id=>document.getElementById(id).value);
+  if (vals.every(v=>!v)) return;
   try {
-    // Load existing Metingen dates
-    const range = encodeURIComponent(`${METINGEN_TAB}!B2:B200`);
-    const res   = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    const data  = await res.json();
-    const rows  = data.values || [];
+    const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${encodeURIComponent(`${METINGEN_TAB}!B2:B200`)}`,{headers:{Authorization:`Bearer ${accessToken}`}});
+    const data=await res.json(); const rows=data.values||[];
+    let rowNum=null;
+    rows.forEach((r,i)=>{if(datumMatch(state.selectedRow.datum,(r[0]||'').toString()))rowNum=i+2;});
+    const mNL={jan:0,feb:1,mrt:2,apr:3,mei:4,jun:5,jul:6,aug:7,sep:8,okt:9,nov:10,dec:11};
+    const p=state.selectedRow.datum.split('/');
+    const datumF=`${parseInt(p[0])}-${mNL[p[1].toLowerCase()]+1}-${2000+parseInt(p[2])}`;
+    if (!rowNum) { const ei=rows.findIndex(r=>!r[0]||r[0].toString().trim()===''); rowNum=ei!==-1?ei+2:rows.length+2; }
+    const updates=[{range:`${METINGEN_TAB}!B${rowNum}`,values:[[datumF]]},{range:`${METINGEN_TAB}!D${rowNum}`,values:[[vals[0]]]},{range:`${METINGEN_TAB}!E${rowNum}`,values:[[vals[1]]]},{range:`${METINGEN_TAB}!F${rowNum}`,values:[[vals[2]]]},{range:`${METINGEN_TAB}!G${rowNum}`,values:[[vals[3]]]},{range:`${METINGEN_TAB}!H${rowNum}`,values:[[vals[4]]]}];
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values:batchUpdate`,{method:'POST',headers:{'Authorization':`Bearer ${accessToken}`,'Content-Type':'application/json'},body:JSON.stringify({valueInputOption:'USER_ENTERED',data:updates})});
+  } catch(e) { showToast('❌ Metingen fout: '+e.message,'error'); }
+}
 
-    // Find matching row
-    let rowNum = null;
-    rows.forEach((r, i) => {
-      if (datumMatch(state.selectedRow.datum, (r[0] || '').toString())) {
-        rowNum = i + 2; // +2 because data starts at row 2
+// ── Plan / Voeding ──────────────────────────────
+async function loadPlan() {
+  if (!accessToken) return;
+  state.planLoaded = true;
+  const container = document.getElementById('planContent');
+  container.innerHTML = '<div class="plan-loading">⏳ Plan laden...</div>';
+  try {
+    const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${encodeURIComponent(`${PLAN_TAB}!B1:C60`)}`,{headers:{Authorization:`Bearer ${accessToken}`}});
+    const data=await res.json(); if(data.error) throw new Error(data.error.message);
+    const rows=data.values||[];
+
+    // Macro grid from rows 22-26 (index 21-25)
+    const macroRows=rows.slice(21,26);
+    const kcal=macroRows[1]?.[1]||state.doelen.kcal||'—', khd=macroRows[2]?.[1]||state.doelen.khd||'—';
+    const eiwit=macroRows[3]?.[1]||state.doelen.eiwit||'—', vet=macroRows[4]?.[1]||state.doelen.vet||'—';
+
+    let html=`<div class="form-section" style="margin-bottom:16px">
+      <div class="section-label">Jouw doelen</div>
+      <div class="plan-macro-grid">
+        <div class="plan-macro-card"><div class="plan-macro-value">${kcal}</div><div class="plan-macro-label">kcal</div></div>
+        <div class="plan-macro-card"><div class="plan-macro-value">${khd}g</div><div class="plan-macro-label">KHD</div></div>
+        <div class="plan-macro-card"><div class="plan-macro-value">${eiwit}g</div><div class="plan-macro-label">Eiwit</div></div>
+        <div class="plan-macro-card"><div class="plan-macro-value">${vet}g</div><div class="plan-macro-label">Vet</div></div>
+      </div></div>`;
+
+    html += '<div class="form-section">';
+    let inSection = false;
+    rows.forEach((row,i) => {
+      if (i>=21&&i<=26) return;
+      const label=(row[0]||'').trim(), value=(row[1]||'').trim();
+      if (!label&&!value) return;
+      if (!value && label) {
+        if (inSection) html += '</div><div class="form-section">';
+        html += `<div class="plan-section-header">${escHtml(label)}</div>`;
+        inSection = true;
+      } else if (label || value) {
+        html += `<div class="plan-row"><div class="plan-label">${escHtml(label)}</div><div class="plan-value">${escHtml(value)}</div></div>`;
       }
     });
+    html += '</div>';
+    container.innerHTML = html;
+  } catch(e) { container.innerHTML=`<div class="plan-loading">❌ ${e.message}</div>`; }
+}
 
-    // Format datum as d-m-yyyy (matching Metingen format)
-    const mNL = {jan:0,feb:1,mrt:2,apr:3,mei:4,jun:5,jul:6,aug:7,sep:8,okt:9,nov:10,dec:11};
-    const p   = state.selectedRow.datum.split('/');
-    const d   = parseInt(p[0]);
-    const m   = mNL[p[1].toLowerCase()] + 1;
-    const y   = 2000 + parseInt(p[2]);
-    const datumFormatted = `${d}-${m}-${y}`;
-
-    if (!rowNum) {
-      // Find first empty row in col B
-      const emptyIdx = rows.findIndex(r => !r[0] || r[0].toString().trim() === '');
-      if (emptyIdx !== -1) {
-        rowNum = emptyIdx + 2;
-      } else {
-        rowNum = rows.length + 2; // append after last row
-      }
-    }
-
-    const updates = [
-      { range: `${METINGEN_TAB}!B${rowNum}`, values: [[datumFormatted]] }, // write date
-      { range: `${METINGEN_TAB}!D${rowNum}`, values: [[vals[0]]] },
-      { range: `${METINGEN_TAB}!E${rowNum}`, values: [[vals[1]]] },
-      { range: `${METINGEN_TAB}!F${rowNum}`, values: [[vals[2]]] },
-      { range: `${METINGEN_TAB}!G${rowNum}`, values: [[vals[3]]] },
-      { range: `${METINGEN_TAB}!H${rowNum}`, values: [[vals[4]]] },
-    ];
-
-    await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values:batchUpdate`,
-      {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data: updates })
-      }
-    );
-  } catch(e) {
-    console.error('submitMetingen:', e);
-    showToast('❌ Fout bij opslaan metingen: ' + e.message, 'error');
+// ── Weekvragen ──────────────────────────────────
+async function loadWeekvragen() {
+  if (!accessToken) return;
+  state.weekvragenLoaded = true;
+  const container = document.getElementById('weekvragenContent');
+  if (!isSundayToday()) {
+    container.innerHTML=`<div class="not-sunday"><div class="icon">📅</div><h3>Weekvragen zijn alleen op zondag beschikbaar</h3><p>Kom terug op zondag.</p></div>`;
+    return;
   }
-}
-
-function datumMatch(progressie, metingen) {
-  // progressie format: "18/mei/26"
-  // metingen format: "18-5-2026" or "18-05-2026" or "2026-05-18"
+  container.innerHTML='<div class="plan-loading">⏳ Weekvragen laden...</div>';
   try {
-    const mNL = {jan:0,feb:1,mrt:2,apr:3,mei:4,jun:5,jul:6,aug:7,sep:8,okt:9,nov:10,dec:11};
-    const p   = progressie.split('/');
-    const pD  = parseInt(p[0]);
-    const pM  = mNL[p[1].toLowerCase()];
-    const pY  = 2000 + parseInt(p[2]);
-    const dateA = new Date(pY, pM, pD);
+    const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${encodeURIComponent(`${WEEKVRAGEN_TAB}!B1:C200`)}`,{headers:{Authorization:`Bearer ${accessToken}`}});
+    const data=await res.json(); if(data.error) throw new Error(data.error.message);
+    const rows=data.values||[];
+    const weeks=[];
+    let cur=null;
+    rows.forEach((row,idx)=>{
+      const label=(row[0]||'').trim();
+      if (/^Week \d+/i.test(label)) { if(cur) weeks.push(cur); cur={title:label,questions:[]}; }
+      else if (cur&&label) cur.questions.push({label,value:row[1]||'',rowIdx:idx});
+    });
+    if (cur) weeks.push(cur);
+    const target=weeks.find(w=>w.questions.some(q=>!q.value))||weeks[weeks.length-1];
+    if (!target) { container.innerHTML='<div class="plan-loading">Geen weekvragen gevonden.</div>'; return; }
 
-    // Try multiple formats for metingen date
-    let dateB;
-    const m = metingen.trim();
-
-    // Try "d-m-yyyy" or "d-m-yy"
-    const dmyMatch = m.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
-    if (dmyMatch) {
-      const y = parseInt(dmyMatch[3]);
-      dateB = new Date(y < 100 ? 2000 + y : y, parseInt(dmyMatch[2]) - 1, parseInt(dmyMatch[1]));
-    }
-
-    // Try "yyyy-mm-dd"
-    const isoMatch = m.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (isoMatch) {
-      dateB = new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
-    }
-
-    // Fallback: let JS parse it
-    if (!dateB || isNaN(dateB)) dateB = new Date(m);
-
-    return dateA.getDate() === dateB.getDate() &&
-           dateA.getMonth() === dateB.getMonth() &&
-           dateA.getFullYear() === dateB.getFullYear();
-  } catch(e) { return false; }
+    let html=`<div class="weekvragen-header"><div class="icon">✍️</div><div><h2>${escHtml(target.title)}</h2><p>Beantwoord de 5 vragen voor deze week</p></div></div>`;
+    target.questions.forEach((q,i)=>{
+      const m=q.label.match(/^(.*?)\s*(\(.*?\))?$/);
+      const title=m?.[1]||q.label, subtitle=m?.[2]||'';
+      html+=`<div class="week-question"><div class="week-q-number">Vraag ${i+1}</div><div class="week-q-title">${escHtml(title)}</div>${subtitle?`<div class="week-q-subtitle">${escHtml(subtitle)}</div>`:''}<textarea id="wq_${i}" placeholder="Jouw antwoord..." rows="3">${escHtml(q.value)}</textarea><input type="hidden" id="wq_row_${i}" value="${q.rowIdx}"></div>`;
+    });
+    html+=`<button class="submit-btn" id="submitWQBtn" onclick="submitWeekvragen(${target.questions.length})">✓ Weekvragen opslaan</button>`;
+    container.innerHTML=html;
+  } catch(e) { container.innerHTML=`<div class="plan-loading">❌ ${e.message}</div>`; }
 }
 
-// ═══════════════════════════════════════════════
-// GOOGLE FIT
-// ═══════════════════════════════════════════════
+async function submitWeekvragen(count) {
+  const btn=document.getElementById('submitWQBtn'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Opslaan...';
+  try {
+    const updates=[];
+    for (let i=0;i<count;i++) {
+      const answer=document.getElementById(`wq_${i}`)?.value||'';
+      const rowNum=parseInt(document.getElementById(`wq_row_${i}`)?.value||'0')+2; // +2: header row + 1-indexed
+      if (rowNum>1) updates.push({range:`${WEEKVRAGEN_TAB}!C${rowNum}`,values:[[answer]]});
+    }
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values:batchUpdate`,{method:'POST',headers:{'Authorization':`Bearer ${accessToken}`,'Content-Type':'application/json'},body:JSON.stringify({valueInputOption:'USER_ENTERED',data:updates})});
+    btn.innerHTML='✓ Opgeslagen!'; btn.classList.add('saved'); showToast('✅ Weekvragen opgeslagen!','success');
+  } catch(e) { showToast('❌ '+e.message,'error'); btn.disabled=false; btn.innerHTML='✓ Weekvragen opslaan'; }
+}
 
+// ── Google Fit ──────────────────────────────────
 function datumToEpoch(datum) {
-  const mNL = {jan:0,feb:1,mrt:2,apr:3,mei:4,jun:5,jul:6,aug:7,sep:8,okt:9,nov:10,dec:11};
-  const p   = datum.split('/');
-  const d   = parseInt(p[0]);
-  const m   = mNL[p[1].toLowerCase()];
-  const y   = 2000 + parseInt(p[2]);
-  const start = new Date(y, m, d, 0, 0, 0).getTime();
-  const end   = new Date(y, m, d, 23, 59, 59).getTime();
-  return { start, end };
-}
-
-async function debugFitSources() {
-  if (!accessToken) { showToast('Eerst inloggen', 'error'); return; }
-  setFitStatus('🔍 Data sources ophalen...');
-  try {
-    const res  = await fetch('https://www.googleapis.com/fitness/v1/users/me/dataSources', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    const data = await res.json();
-    const sources = (data.dataSource || []).map(s => s.dataStreamId).join('\n');
-    console.log('=== AVAILABLE FIT DATA SOURCES ===\n' + sources);
-    // Show in UI
-    setFitStatus('✓ Check console (F12) voor data sources');
-    // Also show in alert for mobile
-    const types = [...new Set((data.dataSource || []).map(s => s.dataType?.name).filter(Boolean))];
-    showToast('Data types: ' + types.slice(0,5).join(', '), '');
-    setTimeout(() => setFitStatus(''), 8000);
-  } catch(e) {
-    setFitStatus('❌ ' + e.message);
-  }
+  const mNL={jan:0,feb:1,mrt:2,apr:3,mei:4,jun:5,jul:6,aug:7,sep:8,okt:9,nov:10,dec:11};
+  const p=datum.split('/');
+  return {start:new Date(2000+parseInt(p[2]),mNL[p[1].toLowerCase()],parseInt(p[0]),0,0,0).getTime(),end:new Date(2000+parseInt(p[2]),mNL[p[1].toLowerCase()],parseInt(p[0]),23,59,59).getTime()};
 }
 
 async function syncFit() {
   if (!state.selectedRow) return;
-  const btn = document.querySelector('.fit-sync-btn');
-  btn.disabled = true;
-  document.getElementById('fitSyncIcon').textContent = '⏳';
-  setFitStatus('⏳ Bezig met laden...');
+  const btn=document.querySelector('.fit-sync-btn'); btn.disabled=true; document.getElementById('fitSyncIcon').textContent='⏳';
+  setFitStatus('⏳ Bezig...');
   await fetchFitData(state.selectedRow.datum);
-  btn.disabled = false;
-  document.getElementById('fitSyncIcon').textContent = '⚡';
+  btn.disabled=false; document.getElementById('fitSyncIcon').textContent='⚡';
 }
 
 async function fetchFitData(datum) {
   if (!accessToken) return;
-  const { start, end } = datumToEpoch(datum);
-  const results = {};
-
+  const {start,end}=datumToEpoch(datum), r={};
   try {
-    // ── Stappen (Garmin) ──────────────────────────
-    const stappen = await fitAggregate('com.google.step_count.delta', start, end);
-    const stappenPts = stappen.bucket?.[0]?.dataset?.[0]?.point || [];
-    results.stappen = stappenPts.reduce((s, p) => s + (p.value?.[0]?.intVal || 0), 0);
+    const sp=await fitAggregate('com.google.step_count.delta',start,end);
+    r.stappen=(sp.bucket?.[0]?.dataset?.[0]?.point||[]).reduce((s,p)=>s+(p.value?.[0]?.intVal||0),0);
+    const gw=await fitAggregate('com.google.weight',start,end);
+    const gwp=gw.bucket?.[0]?.dataset?.[0]?.point||[]; if(gwp.length>0) r.gewicht=gwp[gwp.length-1]?.value?.[0]?.fpVal;
+    const slR=await fetch(`https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${new Date(start-12*3600000).toISOString()}&endTime=${new Date(end).toISOString()}&activityType=72`,{headers:{Authorization:`Bearer ${accessToken}`}});
+    const slD=await slR.json(); let slMs=0;
+    (slD.session||[]).forEach(s=>{slMs+=parseInt(s.endTimeMillis)-parseInt(s.startTimeMillis);});
+    if(slMs>0){const h=Math.floor(slMs/3600000),m2=Math.floor((slMs%3600000)/60000);r.slaap=`${h}:${String(m2).padStart(2,'0')}`;}
+    const ca=await fitAggregate('com.google.active_minutes',start,end);
+    r.cardio=(ca.bucket?.[0]?.dataset?.[0]?.point||[]).reduce((s,p)=>s+(p.value?.[0]?.intVal||0),0);
+    const nu=await fitAggregate('com.google.nutrition',start,end);
+    let khd=0,eiwit=0,vet=0,vezels=0;
+    (nu.bucket?.[0]?.dataset?.[0]?.point||[]).forEach(pt=>{pt.value?.forEach(v=>{(v.mapVal||[]).forEach(e=>{const k=e.key,val=e.value?.fpVal||0;if(k==='carbs.total')khd+=val;if(k==='protein')eiwit+=val;if(k==='fat.total')vet+=val;if(k==='dietary_fiber')vezels+=val;});});});
+    if(khd>0)r.khd=Math.round(khd);if(eiwit>0)r.eiwit=Math.round(eiwit);if(vet>0)r.vet=Math.round(vet);if(vezels>0)r.vezels=Math.round(vezels);
 
-    // ── Gewicht (Garmin) ──────────────────────────
-    const gewicht = await fitAggregate('com.google.weight', start, end);
-    const gewichtPts = gewicht.bucket?.[0]?.dataset?.[0]?.point || [];
-    if (gewichtPts.length > 0) {
-      results.gewicht = gewichtPts[gewichtPts.length - 1]?.value?.[0]?.fpVal;
-    }
-
-    // ── Slaap (Garmin via sessions) ───────────────
-    const sleepStart = new Date(start - 12 * 3600000).toISOString(); // look back 12h for overnight
-    const sleepEnd   = new Date(end).toISOString();
-    const sleepRes   = await fetch(
-      `https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${sleepStart}&endTime=${sleepEnd}&activityType=72`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    const sleepData = await sleepRes.json();
-    let totalSleepMs = 0;
-    (sleepData.session || []).forEach(s => {
-      totalSleepMs += parseInt(s.endTimeMillis) - parseInt(s.startTimeMillis);
-    });
-    if (totalSleepMs > 0) {
-      const h = Math.floor(totalSleepMs / 3600000);
-      const m2 = Math.floor((totalSleepMs % 3600000) / 60000);
-      results.slaap = `${h}:${String(m2).padStart(2,'0')}`;
-    }
-
-    // ── Cardio / Active minutes (Garmin) ─────────
-    const cardio = await fitAggregate('com.google.active_minutes', start, end);
-    const cardioPts = cardio.bucket?.[0]?.dataset?.[0]?.point || [];
-    results.cardio = cardioPts.reduce((s, p) => s + (p.value?.[0]?.intVal || 0), 0);
-
-    // Also try move minutes as fallback
-    if (!results.cardio || results.cardio === 0) {
-      const move = await fitAggregate('com.google.calories.expended', start, end);
-      // try heart points / exercise time from activity segments
-      const actSeg = await fitAggregate('com.google.activity.segment', start, end);
-      const actPts = actSeg.bucket?.[0]?.dataset?.[0]?.point || [];
-      // activity type 7 = walking, 8 = running, 1 = biking etc. — sum non-sedentary
-      let activeMs = 0;
-      actPts.forEach(p => {
-        const type = p.value?.[0]?.intVal;
-        if (type && type !== 3 && type !== 109) { // exclude still/unknown
-          activeMs += (parseInt(p.endTimeNanos) - parseInt(p.startTimeNanos)) / 1e6;
-        }
-      });
-      if (activeMs > 0) results.cardio = Math.round(activeMs / 60000);
-    }
-
-    // ── Nutrition (MFP via Health Connect) ───────
-    const nutrition = await fitAggregate('com.google.nutrition', start, end);
-    const nutPts = nutrition.bucket?.[0]?.dataset?.[0]?.point || [];
-    let khd = 0, eiwit = 0, vet = 0, vezels = 0;
-    nutPts.forEach(pt => {
-      pt.value?.forEach(v => {
-        (v.mapVal || []).forEach(entry => {
-          const k   = entry.key;
-          const val = entry.value?.fpVal || 0;
-          if (k === 'carbs.total')  khd    += val;
-          if (k === 'protein')      eiwit  += val;
-          if (k === 'fat.total')    vet    += val;
-          if (k === 'dietary_fiber') vezels += val;
-        });
-      });
-    });
-    if (khd > 0)    results.khd    = Math.round(khd);
-    if (eiwit > 0)  results.eiwit  = Math.round(eiwit);
-    if (vet > 0)    results.vet    = Math.round(vet);
-    if (vezels > 0) results.vezels = Math.round(vezels);
-
-    console.log('Fit results:', results);
-
-    // ── Apply to form ─────────────────────────────
-    let filled = [];
-
-    if (results.stappen > 0) {
-      document.getElementById('stappen').value = results.stappen;
-      filled.push('stappen');
-    }
-    if (results.gewicht) {
-      document.getElementById('gewicht').value = results.gewicht.toFixed(1).replace('.', ',');
-      filled.push('gewicht');
-    }
-    if (results.slaap) {
-      document.getElementById('slaap').value = results.slaap;
-      filled.push('slaap');
-    }
-    if (results.cardio > 0) {
-      document.getElementById('cardio').value = results.cardio;
-      filled.push('cardio');
-    }
-    if (results.khd > 0) {
-      document.getElementById('khd').value = results.khd;
-      filled.push('KHD');
-    }
-    if (results.eiwit > 0) {
-      document.getElementById('eiwitten').value = results.eiwit;
-      filled.push('eiwitten');
-    }
-    if (results.vet > 0) {
-      document.getElementById('vetten').value = results.vet;
-      filled.push('vetten');
-    }
-    if (results.vezels > 0) {
-      document.getElementById('vezels').value = results.vezels;
-      filled.push('vezels');
-    }
-
-    if (filled.length > 0) {
-      setFitStatus(`✓ ${filled.join(', ')} geladen`);
-    } else {
-      setFitStatus('⚠️ Geen Fit data gevonden voor deze datum');
-    }
-    setTimeout(() => setFitStatus(''), 5000);
-
-  } catch(e) {
-    console.error('Fit error:', e);
-    setFitStatus('❌ Fit fout: ' + e.message);
-    setTimeout(() => setFitStatus(''), 5000);
-  }
+    const filled=[];
+    if(r.stappen>0){document.getElementById('stappen').value=r.stappen;filled.push('stappen');}
+    if(r.gewicht){document.getElementById('gewicht').value=r.gewicht.toFixed(1).replace('.',',');filled.push('gewicht');}
+    if(r.slaap){document.getElementById('slaap').value=r.slaap;filled.push('slaap');}
+    if(r.cardio>0){document.getElementById('cardio').value=r.cardio;filled.push('cardio');}
+    if(r.khd>0){document.getElementById('khd').value=r.khd;filled.push('KHD');}
+    if(r.eiwit>0){document.getElementById('eiwitten').value=r.eiwit;filled.push('eiwitten');}
+    if(r.vet>0){document.getElementById('vetten').value=r.vet;filled.push('vetten');}
+    if(r.vezels>0){document.getElementById('vezels').value=r.vezels;filled.push('vezels');}
+    setFitStatus(filled.length>0?`✓ ${filled.join(', ')} geladen`:'⚠️ Geen Fit data voor deze datum');
+    setTimeout(()=>setFitStatus(''),5000);
+  } catch(e){setFitStatus('❌ Fit fout: '+e.message);setTimeout(()=>setFitStatus(''),5000);}
 }
 
-function setFitStatus(msg) {
-  const el = document.getElementById('fitStatus');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.display = msg ? 'block' : 'none';
+function setFitStatus(msg){const el=document.getElementById('fitStatus');if(!el)return;el.textContent=msg;el.style.display=msg?'block':'none';}
+async function fitAggregate(dataTypeName,bS,bE){const res=await fetch('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate',{method:'POST',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},body:JSON.stringify({aggregateBy:[{dataTypeName}],bucketByTime:{durationMillis:bE-bS},startTimeMillis:bS,endTimeMillis:bE})});return await res.json();}
+
+// ── Helpers ─────────────────────────────────────
+function datumMatch(progressie,metingen){
+  try{const mNL={jan:0,feb:1,mrt:2,apr:3,mei:4,jun:5,jul:6,aug:7,sep:8,okt:9,nov:10,dec:11};const p=progressie.split('/');const dA=new Date(2000+parseInt(p[2]),mNL[p[1].toLowerCase()],parseInt(p[0]));let dB;const m=metingen.trim();const d1=m.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);if(d1){const y=parseInt(d1[3]);dB=new Date(y<100?2000+y:y,parseInt(d1[2])-1,parseInt(d1[1]));}const iso=m.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(iso)dB=new Date(parseInt(iso[1]),parseInt(iso[2])-1,parseInt(iso[3]));if(!dB||isNaN(dB))dB=new Date(m);return dA.getDate()===dB.getDate()&&dA.getMonth()===dB.getMonth()&&dA.getFullYear()===dB.getFullYear();}catch(e){return false;}
 }
+function v(id){return document.getElementById(id)?.value??'';}
+function sv(id){const el=document.getElementById(id);return el?(el.options[el.selectedIndex]?.text||''):'';}
+function escHtml(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-async function fitAggregate(dataTypeName, bucketStart, bucketEnd) {
-  const body = {
-    aggregateBy: [{ dataTypeName }],
-    bucketByTime: { durationMillis: bucketEnd - bucketStart },
-    startTimeMillis: bucketStart,
-    endTimeMillis: bucketEnd,
-  };
-  const res = await fetch('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  const data = await res.json();
-  console.log(`Fit [${dataTypeName}]:`, JSON.stringify(data).substring(0, 200));
-  return data;
-}
-
-
-
-function v(id)  { return document.getElementById(id)?.value ?? ''; }
-function sv(id) { const el = document.getElementById(id); return el ? (el.options[el.selectedIndex]?.text || '') : ''; }
-
-// ═══════════════════════════════════════════════
-// START
-// ═══════════════════════════════════════════════
 init();
 </script>
 </body>
