@@ -360,7 +360,7 @@ function switchTab(tab) {
   document.getElementById('page-' + tab).classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'plan' && !state.planLoaded) loadPlan();
-  if (tab === 'weekvragen' && !state.weekvragenLoaded) loadWeekvragen();
+  if (tab === 'weekvragen') { state.weekvragenLoaded = false; loadWeekvragen(); }
 }
 
 function isSundayToday() { return new Date().getDay() === 0; }
@@ -683,10 +683,6 @@ async function loadWeekvragen() {
   if (!accessToken) return;
   state.weekvragenLoaded = true;
   const container = document.getElementById('weekvragenContent');
-  if (!isSundayToday()) {
-    container.innerHTML=`<div class="not-sunday"><div class="icon">📅</div><h3>Weekvragen zijn alleen op zondag beschikbaar</h3><p>Kom terug op zondag.</p></div>`;
-    return;
-  }
   container.innerHTML='<div class="plan-loading">⏳ Weekvragen laden...</div>';
   try {
     const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${encodeURIComponent(`${WEEKVRAGEN_TAB}!B1:C200`)}`,{headers:{Authorization:`Bearer ${accessToken}`}});
