@@ -618,17 +618,24 @@ const METINGEN_TAB   = 'Metingen';
 const TOKEN_KEY      = 'jb_token_v2';
 
 // ═══════════════════════════════════════════════
-// INIT — read ?id= from URL
+// INIT — read ?id= from URL or localStorage (PWA)
 // ═══════════════════════════════════════════════
 function init() {
-  const params = new URLSearchParams(window.location.search);
-  state.sheetId = params.get('id') || null;
+  const params  = new URLSearchParams(window.location.search);
+  const urlId   = params.get('id');
+  const urlName = params.get('name');
 
-  // Show participant name in header dropdown
-  const name = params.get('name') || '';
-  if (name) {
-    document.title = 'JB Coaching · ' + decodeURIComponent(name);
-  }
+  // Save to localStorage when opened via full link
+  if (urlId) localStorage.setItem('jb_sheet_id', urlId);
+  if (urlName) localStorage.setItem('jb_participant_name', urlName);
+
+  // Use URL or fall back to localStorage (for PWA without URL params)
+  state.sheetId = urlId || localStorage.getItem('jb_sheet_id') || null;
+  const name = urlName
+    ? decodeURIComponent(urlName)
+    : (localStorage.getItem('jb_participant_name') || '');
+
+  if (name) document.title = 'JB Coaching · ' + name;
 
   if (!state.sheetId) {
     document.getElementById('welcomeScreen').style.display = 'block';
@@ -636,10 +643,8 @@ function init() {
     return;
   }
 
-  // Try cached token
   if (loadToken()) {
     setStatus('Verbonden', 'connected');
-    // Try cached email first, then fetch fresh
     const cachedEmail = localStorage.getItem('jb_user_email');
     if (cachedEmail) setUserPill(cachedEmail);
     fetchUserEmail(accessToken);
@@ -907,6 +912,16 @@ function autoSelectToday() {
 function onDatePickerChange() {
   const picker = document.getElementById('datePicker');
   const idx    = picker.value;
+
+  // Warn if unsaved changes
+  if (!state.isSaved && state.selectedRow && idx !== '' && parseInt(idx) !== state.selectedRow.rowIndex) {
+    if (!confirm('Je hebt niet-opgeslagen wijzigingen. Wil je toch van datum wisselen?')) {
+      // Revert picker to current date
+      picker.value = state.selectedRow.rowIndex;
+      return;
+    }
+  }
+
   if (idx === '') { document.getElementById('formArea').style.display = 'none'; return; }
   const row = state.sheetData[parseInt(idx)] || [];
   selectDate(parseInt(idx), (row[1]||'').trim(), (row[2]||'').trim());
@@ -918,6 +933,12 @@ function stepDate(dir) {
   if (!opts.length) return;
   const cur  = opts.findIndex(o => o.value === picker.value);
   const next = Math.max(0, Math.min(opts.length - 1, cur + dir));
+
+  // Warn if unsaved changes
+  if (!state.isSaved && state.selectedRow && opts[next].value !== picker.value) {
+    if (!confirm('Je hebt niet-opgeslagen wijzigingen. Wil je toch van datum wisselen?')) return;
+  }
+
   picker.value = opts[next].value;
   onDatePickerChange();
 }
@@ -927,7 +948,7 @@ function stepDate(dir) {
 // ═══════════════════════════════════════════════
 function selectDate(rowIndex, datum, dag) {
   state.selectedRow = { rowIndex, datum, dag };
-  state.isSaved     = false;
+  state.isSaved     = true; // treat fresh load as saved until user edits
 
   resetForm();
 
