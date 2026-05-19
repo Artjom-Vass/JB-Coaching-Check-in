@@ -719,6 +719,8 @@ async function loadWeekvragen() {
 }
 
 function renderWeekvragen(selectedIdx) {
+  // Save any typed answers before switching week
+  saveCurrentAnswersToMemory();
   const { weeks, introText } = state.weekvragenData;
   const target = weeks[selectedIdx];
   const container = document.getElementById('weekvragenContent');
@@ -768,17 +770,52 @@ function renderWeekvragen(selectedIdx) {
 }
 
 async function submitWeekvragen(count) {
-  const btn=document.getElementById('submitWQBtn'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Opslaan...';
+  const btn = document.getElementById('submitWQBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Opslaan...';
   try {
-    const updates=[];
-    for (let i=0;i<count;i++) {
-      const answer=document.getElementById(`wq_${i}`)?.value||'';
-      const rowNum=parseInt(document.getElementById(`wq_row_${i}`)?.value||'0')+2; // +2: header row + 1-indexed
-      if (rowNum>1) updates.push({range:`${WEEKVRAGEN_TAB}!C${rowNum}`,values:[[answer]]});
+    const updates = [];
+    for (let i = 0; i < count; i++) {
+      const answer = document.getElementById(`wq_${i}`)?.value || '';
+      const rowIdx = parseInt(document.getElementById(`wq_row_${i}`)?.value || '0');
+      // rowIdx is 0-based array index from B1:C200
+      // So sheet row = rowIdx + 1 (since array index 0 = sheet row 1)
+      const sheetRow = rowIdx + 1;
+      updates.push({ range: `${WEEKVRAGEN_TAB}!C${sheetRow}`, values: [[answer]] });
+
+      // Also update in-memory so switching weeks shows saved values
+      const { weeks } = state.weekvragenData;
+      weeks.forEach(w => {
+        const q = w.questions.find(q => q.rowIdx === rowIdx);
+        if (q) q.value = answer;
+      });
     }
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values:batchUpdate`,{method:'POST',headers:{'Authorization':`Bearer ${accessToken}`,'Content-Type':'application/json'},body:JSON.stringify({valueInputOption:'USER_ENTERED',data:updates})});
-    btn.innerHTML='✓ Opgeslagen!'; btn.classList.add('saved'); showToast('✅ Weekvragen opgeslagen!','success');
-  } catch(e) { showToast('❌ '+e.message,'error'); btn.disabled=false; btn.innerHTML='✓ Weekvragen opslaan'; }
+
+    const res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values:batchUpdate`,
+      { method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data: updates }) }
+    );
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    btn.innerHTML = '✓ Opgeslagen!'; btn.classList.add('saved');
+    showToast('✅ Weekvragen opgeslagen!', 'success');
+  } catch(e) {
+    showToast('❌ ' + e.message, 'error');
+    btn.disabled = false; btn.innerHTML = '✓ Weekvragen opslaan';
+  }
+}
+
+// Save current textarea values to in-memory before switching week
+function saveCurrentAnswersToMemory() {
+  if (!state.weekvragenData) return;
+  const { weeks } = state.weekvragenData;
+  weeks.forEach(w => {
+    w.questions.forEach((q, i) => {
+      const ta = document.getElementById(`wq_${i}`);
+      if (ta) q.value = ta.value;
+    });
+  });
 }
 
 // ── Google Fit ──────────────────────────────────
