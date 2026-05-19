@@ -680,47 +680,69 @@ async function loadPlan() {
 
 // ── Weekvragen ──────────────────────────────────
 async function loadWeekvragen() {
+  const container = document.getElementById('weekvragenContent');
+  
   if (!accessToken) { 
-    document.getElementById('weekvragenContent').innerHTML='<div class="plan-loading">❌ Niet ingelogd</div>';
+    container.innerHTML='<div class="plan-loading">❌ Niet ingelogd — log eerst in</div>';
     return; 
   }
+  if (!state.sheetId) {
+    container.innerHTML='<div class="plan-loading">❌ Geen sheet ID gevonden</div>';
+    return;
+  }
+
   state.weekvragenLoaded = true;
-  const container = document.getElementById('weekvragenContent');
-  container.innerHTML='<div class="plan-loading">⏳ Weekvragen laden...</div>';
+  container.innerHTML='<div class="plan-loading">⏳ Weekvragen laden uit: ' + WEEKVRAGEN_TAB + '...</div>';
+  
+  // Small delay to let the DOM update show the message
+  await new Promise(r => setTimeout(r, 100));
+
   try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${encodeURIComponent(`${WEEKVRAGEN_TAB}!B1:C200`)}`;
-    const res=await fetch(url,{headers:{Authorization:`Bearer ${accessToken}`}});
-    const data=await res.json(); 
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${encodeURIComponent(WEEKVRAGEN_TAB + '!B1:C200')}`;
+    container.innerHTML='<div class="plan-loading">⏳ Fetching: ' + url.substring(0,80) + '...</div>';
+    
+    const res = await fetch(url, {headers:{Authorization:`Bearer ${accessToken}`}});
+    const data = await res.json(); 
     
     if(data.error) throw new Error(`Sheet fout ${data.error.code}: ${data.error.message}`);
     
-    const rows=data.values||[];
-    if (rows.length === 0) { container.innerHTML='<div class="plan-loading">⚠️ Geen data gevonden in Weekvragen tabblad</div>'; return; }
+    const rows = data.values || [];
+    if (rows.length === 0) { 
+      container.innerHTML='<div class="plan-loading">⚠️ Tabblad "' + WEEKVRAGEN_TAB + '" is leeg of niet gevonden</div>'; 
+      return; 
+    }
     
-    const weeks=[];
-    let cur=null;
-    rows.forEach((row,idx)=>{
-      const label=(row[0]||'').trim();
-      if (/^Week \d+/i.test(label)) { if(cur) weeks.push(cur); cur={title:label,questions:[]}; }
-      else if (cur&&label) cur.questions.push({label,value:row[1]||'',rowIdx:idx});
+    const weeks = [];
+    let cur = null;
+    rows.forEach((row, idx) => {
+      const label = (row[0]||'').trim();
+      if (/^Week \d+/i.test(label)) { 
+        if(cur) weeks.push(cur); 
+        cur = {title:label, questions:[]}; 
+      } else if (cur && label) {
+        cur.questions.push({label, value:row[1]||'', rowIdx:idx});
+      }
     });
     if (cur) weeks.push(cur);
 
-    if (weeks.length === 0) { container.innerHTML='<div class="plan-loading">⚠️ Geen weekblokken gevonden. Controleer of het tabblad "Weekvragen" bestaat met "Week 1", "Week 2" etc.</div>'; return; }
+    if (weeks.length === 0) { 
+      container.innerHTML='<div class="plan-loading">⚠️ Geen "Week 1", "Week 2" etc. gevonden in kolom B</div>'; 
+      return; 
+    }
 
-    const target=weeks.find(w=>w.questions.some(q=>!q.value))||weeks[weeks.length-1];
-    if (!target) { container.innerHTML='<div class="plan-loading">✅ Alle weekvragen zijn al beantwoord.</div>'; return; }
+    const target = weeks.find(w => w.questions.some(q => !q.value)) || weeks[weeks.length-1];
 
-    let html=`<div class="weekvragen-header"><div class="icon">✍️</div><div><h2>${escHtml(target.title)}</h2><p>Beantwoord de 5 vragen voor deze week</p></div></div>`;
-    target.questions.forEach((q,i)=>{
-      const m=q.label.match(/^(.*?)\s*(\(.*?\))?$/);
-      const title=m?.[1]||q.label, subtitle=m?.[2]||'';
-      html+=`<div class="week-question"><div class="week-q-number">Vraag ${i+1}</div><div class="week-q-title">${escHtml(title)}</div>${subtitle?`<div class="week-q-subtitle">${escHtml(subtitle)}</div>`:''}<textarea id="wq_${i}" placeholder="Jouw antwoord..." rows="3">${escHtml(q.value)}</textarea><input type="hidden" id="wq_row_${i}" value="${q.rowIdx}"></div>`;
+    let html = `<div class="weekvragen-header"><div class="icon">✍️</div><div><h2>${escHtml(target.title)}</h2><p>Beantwoord de vragen voor deze week</p></div></div>`;
+    target.questions.forEach((q, i) => {
+      const m = q.label.match(/^(.*?)\s*(\(.*?\))?$/);
+      const title = m?.[1]||q.label, subtitle = m?.[2]||'';
+      html += `<div class="week-question"><div class="week-q-number">Vraag ${i+1}</div><div class="week-q-title">${escHtml(title)}</div>${subtitle?`<div class="week-q-subtitle">${escHtml(subtitle)}</div>`:''}<textarea id="wq_${i}" placeholder="Jouw antwoord..." rows="3">${escHtml(q.value)}</textarea><input type="hidden" id="wq_row_${i}" value="${q.rowIdx}"></div>`;
     });
-    html+=`<button class="submit-btn" id="submitWQBtn" onclick="submitWeekvragen(${target.questions.length})">✓ Weekvragen opslaan</button>`;
-    container.innerHTML=html;
+    html += `<button class="submit-btn" id="submitWQBtn" onclick="submitWeekvragen(${target.questions.length})">✓ Weekvragen opslaan</button>`;
+    container.innerHTML = html;
+
   } catch(e) { 
-    container.innerHTML=`<div class="plan-loading">❌ Fout: ${escHtml(e.message)}</div>`; 
+    container.innerHTML = `<div class="plan-loading">❌ Fout: ${escHtml(e.message)}</div>`; 
   }
 }
 
