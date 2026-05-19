@@ -278,7 +278,12 @@ textarea { resize: vertical; min-height: 80px; font-size: 14px; }
 
       <div class="form-section" id="metingenSection" style="display:none">
         <div class="section-label">Wekelijkse metingen</div>
-        <div class="sunday-badge">📅 Zondag check-in</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <div class="sunday-badge">📅 Zondag check-in</div>
+          <button class="sunday-badge" onclick="switchTab('weekvragen')" style="cursor:pointer;background:rgba(91,141,238,0.12);border-color:rgba(91,141,238,0.3);color:var(--blue);">
+            ✍️ Vul hier je weekvragen in
+          </button>
+        </div>
         <p class="info-text" style="margin-bottom:12px">Meet in centimeters met komma</p>
         <div class="field-row">
           <div class="field"><label>Buikomvang navel</label><input type="text" id="meting_navel" placeholder="80,0" inputmode="decimal"></div>
@@ -303,6 +308,9 @@ textarea { resize: vertical; min-height: 80px; font-size: 14px; }
 
 <!-- PAGE: Weekvragen -->
 <div class="page" id="page-weekvragen">
+  <button onclick="switchTab('progressie')" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);font-family:var(--font);font-size:13px;cursor:pointer;margin-bottom:14px;padding:0;">
+    ‹ Terug naar progressie
+  </button>
   <div id="weekvragenContent"><div class="plan-loading">⏳ Laden...</div></div>
 </div>
 
@@ -313,9 +321,6 @@ textarea { resize: vertical; min-height: 80px; font-size: 14px; }
   </button>
   <button class="nav-tab" id="tab-plan" onclick="switchTab('plan')">
     <span class="icon">📋</span><span>Mijn plan</span>
-  </button>
-  <button class="nav-tab hidden" id="tab-weekvragen" onclick="switchTab('weekvragen')">
-    <span class="icon">❓</span><span>Weekvragen</span>
   </button>
 </nav>
 
@@ -363,7 +368,7 @@ function isSundayToday() { return new Date().getDay() === 0; }
 
 function setupNav() {
   document.getElementById('bottomNav').classList.add('visible');
-  if (isSundayToday()) document.getElementById('tab-weekvragen').classList.remove('hidden');
+  // weekvragen is accessible via button in metingen section, not via nav tab
 }
 
 // ── Init ────────────────────────────────────────
@@ -469,13 +474,19 @@ async function loadDates() {
 async function loadDoelen() {
   if (!accessToken) return;
   try {
-    const range = encodeURIComponent(`${PROGRESSIE_TAB}!G2:K2`);
+    // E22 = doel label, F23:F26 = kcal/khd/eiwit/vet doelen
+    const range = encodeURIComponent(`${PLAN_TAB}!E22:F26`);
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`, {headers:{Authorization:`Bearer ${accessToken}`}});
-    const data = await res.json(); const row = data.values?.[0]||[];
-    const [kcal,khd,eiwit,vet,vezels] = [row[0]||'—',row[1]||'—',row[2]||'—',row[3]||'—',row[4]||'—'];
+    const data = await res.json(); const rows = data.values||[];
+    // E22 = rows[0][0], F23 = rows[1][1], F24 = rows[2][1], F25 = rows[3][1], F26 = rows[4][1]
+    const doelLabel = rows[0]?.[0] || '—';
+    const kcal  = rows[1]?.[1] || '—';
+    const khd   = rows[2]?.[1] || '—';
+    const eiwit = rows[3]?.[1] || '—';
+    const vet   = rows[4]?.[1] || '—';
     const el = document.getElementById('doelTekst');
-    if (el) el.textContent = `Doelen: ${kcal} kcal · ${khd}g KHD · ${eiwit}g Eiwit · ${vet}g Vet · ${vezels}g Vezels`;
-    state.doelen = {kcal,khd,eiwit,vet,vezels};
+    if (el) el.textContent = `Doelen: ${kcal} kcal · ${khd}g KHD · ${eiwit}g Eiwit · ${vet}g Vet`;
+    state.doelen = {doelLabel, kcal, khd, eiwit, vet};
   } catch(e) {}
 }
 
@@ -632,13 +643,17 @@ async function loadPlan() {
     const data=await res.json(); if(data.error) throw new Error(data.error.message);
     const rows=data.values||[];
 
-    // Macro grid from rows 22-26 (index 21-25)
-    const macroRows=rows.slice(21,26);
-    const kcal=macroRows[1]?.[1]||state.doelen.kcal||'—', khd=macroRows[2]?.[1]||state.doelen.khd||'—';
-    const eiwit=macroRows[3]?.[1]||state.doelen.eiwit||'—', vet=macroRows[4]?.[1]||state.doelen.vet||'—';
+    // Macro grid from F23:F26 (col F = index 1 when fetching E:F)
+    // We already have state.doelen loaded — use those values
+    const doelLabel = state.doelen.doelLabel || '—';
+    const kcal  = state.doelen.kcal  || '—';
+    const khd   = state.doelen.khd   || '—';
+    const eiwit = state.doelen.eiwit || '—';
+    const vet   = state.doelen.vet   || '—';
 
     let html=`<div class="form-section" style="margin-bottom:16px">
       <div class="section-label">Jouw doelen</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">🎯 ${escHtml(doelLabel)}</div>
       <div class="plan-macro-grid">
         <div class="plan-macro-card"><div class="plan-macro-value">${kcal}</div><div class="plan-macro-label">kcal</div></div>
         <div class="plan-macro-card"><div class="plan-macro-value">${khd}g</div><div class="plan-macro-label">KHD</div></div>
