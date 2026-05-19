@@ -277,11 +277,10 @@ textarea { resize: vertical; min-height: 80px; font-size: 14px; }
       </div>
 
       <div class="form-section" id="metingenSection" style="display:none">
-        <div class="section-label">Wekelijkse metingen</div>
+        <div class="section-label">Wekelijkse check-in</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-          <div class="sunday-badge">📅 Zondag check-in</div>
           <button class="sunday-badge" onclick="switchTab('weekvragen')" style="cursor:pointer;background:rgba(91,141,238,0.12);border-color:rgba(91,141,238,0.3);color:var(--blue);">
-            ✍️ Vul hier je weekvragen in
+            ✅ Vul hier je weekvragen in
           </button>
         </div>
         <p class="info-text" style="margin-bottom:12px">Meet in centimeters met komma</p>
@@ -474,16 +473,15 @@ async function loadDates() {
 async function loadDoelen() {
   if (!accessToken) return;
   try {
-    // E22 = doel label, F23:F26 = kcal/khd/eiwit/vet doelen
-    const range = encodeURIComponent(`${PLAN_TAB}!E22:F26`);
+    // E22 = doel label, E23 = kcal, E24 = KHD, E25 = eiwitten, E26 = vetten
+    const range = encodeURIComponent(`${PLAN_TAB}!E22:E26`);
     const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`, {headers:{Authorization:`Bearer ${accessToken}`}});
     const data = await res.json(); const rows = data.values||[];
-    // E22 = rows[0][0], F23 = rows[1][1], F24 = rows[2][1], F25 = rows[3][1], F26 = rows[4][1]
     const doelLabel = rows[0]?.[0] || '—';
-    const kcal  = rows[1]?.[1] || '—';
-    const khd   = rows[2]?.[1] || '—';
-    const eiwit = rows[3]?.[1] || '—';
-    const vet   = rows[4]?.[1] || '—';
+    const kcal  = rows[1]?.[0] || '—';
+    const khd   = rows[2]?.[0] || '—';
+    const eiwit = rows[3]?.[0] || '—';
+    const vet   = rows[4]?.[0] || '—';
     const el = document.getElementById('doelTekst');
     if (el) el.textContent = `Doelen: ${kcal} kcal · ${khd}g KHD · ${eiwit}g Eiwit · ${vet}g Vet`;
     state.doelen = {doelLabel, kcal, khd, eiwit, vet};
