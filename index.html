@@ -1155,24 +1155,50 @@ async function submitMetingen() {
   if (vals.every(v => !v)) return;
 
   try {
-    const range = encodeURIComponent(`${METINGEN_TAB}!B2:B100`);
+    // Load existing Metingen dates
+    const range = encodeURIComponent(`${METINGEN_TAB}!B2:B200`);
     const res   = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values/${range}`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
     const data  = await res.json();
     const rows  = data.values || [];
-    let rowNum  = null;
-    rows.forEach((r, i) => { if (datumMatch(state.selectedRow.datum, (r[0]||'').toString())) rowNum = i + 2; });
-    if (!rowNum) { showToast('⚠️ Datum niet in Metingen tabblad', 'error'); return; }
+
+    // Find matching row
+    let rowNum = null;
+    rows.forEach((r, i) => {
+      if (datumMatch(state.selectedRow.datum, (r[0] || '').toString())) {
+        rowNum = i + 2; // +2 because data starts at row 2
+      }
+    });
+
+    // Format datum as d-m-yyyy (matching Metingen format)
+    const mNL = {jan:0,feb:1,mrt:2,apr:3,mei:4,jun:5,jul:6,aug:7,sep:8,okt:9,nov:10,dec:11};
+    const p   = state.selectedRow.datum.split('/');
+    const d   = parseInt(p[0]);
+    const m   = mNL[p[1].toLowerCase()] + 1;
+    const y   = 2000 + parseInt(p[2]);
+    const datumFormatted = `${d}-${m}-${y}`;
+
+    if (!rowNum) {
+      // Find first empty row in col B
+      const emptyIdx = rows.findIndex(r => !r[0] || r[0].toString().trim() === '');
+      if (emptyIdx !== -1) {
+        rowNum = emptyIdx + 2;
+      } else {
+        rowNum = rows.length + 2; // append after last row
+      }
+    }
 
     const updates = [
+      { range: `${METINGEN_TAB}!B${rowNum}`, values: [[datumFormatted]] }, // write date
       { range: `${METINGEN_TAB}!D${rowNum}`, values: [[vals[0]]] },
       { range: `${METINGEN_TAB}!E${rowNum}`, values: [[vals[1]]] },
       { range: `${METINGEN_TAB}!F${rowNum}`, values: [[vals[2]]] },
       { range: `${METINGEN_TAB}!G${rowNum}`, values: [[vals[3]]] },
       { range: `${METINGEN_TAB}!H${rowNum}`, values: [[vals[4]]] },
     ];
+
     await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${state.sheetId}/values:batchUpdate`,
       {
@@ -1181,16 +1207,46 @@ async function submitMetingen() {
         body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data: updates })
       }
     );
-  } catch(e) { console.error('submitMetingen:', e); }
+  } catch(e) {
+    console.error('submitMetingen:', e);
+    showToast('❌ Fout bij opslaan metingen: ' + e.message, 'error');
+  }
 }
 
 function datumMatch(progressie, metingen) {
+  // progressie format: "18/mei/26"
+  // metingen format: "18-5-2026" or "18-05-2026" or "2026-05-18"
   try {
     const mNL = {jan:0,feb:1,mrt:2,apr:3,mei:4,jun:5,jul:6,aug:7,sep:8,okt:9,nov:10,dec:11};
     const p   = progressie.split('/');
-    const a   = new Date(2000+parseInt(p[2]), mNL[p[1].toLowerCase()], parseInt(p[0])).toDateString();
-    const b   = new Date(metingen).toDateString();
-    return a === b;
+    const pD  = parseInt(p[0]);
+    const pM  = mNL[p[1].toLowerCase()];
+    const pY  = 2000 + parseInt(p[2]);
+    const dateA = new Date(pY, pM, pD);
+
+    // Try multiple formats for metingen date
+    let dateB;
+    const m = metingen.trim();
+
+    // Try "d-m-yyyy" or "d-m-yy"
+    const dmyMatch = m.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
+    if (dmyMatch) {
+      const y = parseInt(dmyMatch[3]);
+      dateB = new Date(y < 100 ? 2000 + y : y, parseInt(dmyMatch[2]) - 1, parseInt(dmyMatch[1]));
+    }
+
+    // Try "yyyy-mm-dd"
+    const isoMatch = m.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoMatch) {
+      dateB = new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
+    }
+
+    // Fallback: let JS parse it
+    if (!dateB || isNaN(dateB)) dateB = new Date(m);
+
+    return dateA.getDate() === dateB.getDate() &&
+           dateA.getMonth() === dateB.getMonth() &&
+           dateA.getFullYear() === dateB.getFullYear();
   } catch(e) { return false; }
 }
 
