@@ -358,7 +358,9 @@ function switchTab(tab) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + tab).classList.add('active');
-  document.getElementById('tab-' + tab).classList.add('active');
+  // Only update nav tab if it exists
+  const navTab = document.getElementById('tab-' + tab);
+  if (navTab) navTab.classList.add('active');
   if (tab === 'plan' && !state.planLoaded) loadPlan();
   if (tab === 'weekvragen') { state.weekvragenLoaded = false; loadWeekvragen(); }
 }
